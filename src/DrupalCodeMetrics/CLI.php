@@ -4,6 +4,8 @@
  * Handle CLI invocation.
  */
 
+require_once "bootstrap.php";
+
 /**
  * Class DrupalCodeMetrics_CLI.
  */

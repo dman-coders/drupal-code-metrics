@@ -22,4 +22,4 @@ if (is_file(dirname(__FILE__).'/../DrupalCodeMetrics/CLI.php') === true) {
 }
 
 $cli = new DrupalCodeMetrics_CLI();
-$cli->createIndex();
+$cli->process();

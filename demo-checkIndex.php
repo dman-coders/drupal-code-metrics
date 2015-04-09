@@ -5,7 +5,6 @@
  *
  * DO NOT RUN THIS, it's devel tesing only.
  */
-global $entity_manager;
 require_once "bootstrap.php";
 
 
