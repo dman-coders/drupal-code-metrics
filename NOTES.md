@@ -1,6 +1,6 @@
 I'm learning Composer and Doctrine for the first time here.
 
-The DATABASE scema is managed by Doctrine.
+The DATABASE schema is managed by Doctrine.
 Specially constructed files in the /src/ directory are scanned.
 Object definitions there define the data schemas, and the data schemas
 are then automatically translated into database schemas when we run:
