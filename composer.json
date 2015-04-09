@@ -1,11 +1,16 @@
 {
   "name": "dman-coders/drupal-code-metrics",
   "description": "Performs analysis on Drupal project codebases to summarize code quality.",
+  "keywords":[
+    "drupal"
+  ],
   "require": {
     "squizlabs/php_codesniffer": "~2.3",
     "drupal/coder": "~8.2",
     "doctrine/orm": "2.4.*",
-    "symfony/yaml": "2.*"
+    "symfony/yaml": "2.*",
+    "phpmd/phpmd": "2.2.1",
+    "sebastian/phpcpd": "2.0.1"
   },
   "autoload": {
     "psr-0": {
@@ -18,5 +23,6 @@
       "name": "Dan Morrison",
       "email": "dan@coders.co.nz"
     }
-  ]
+  ],
+  "bin": ["src/bin/dcm"]
 }
