@@ -52,7 +52,7 @@ class DrupalCodeMetrics_CLI {
       $index->indexFolder($path);
     }
     if ($this->options['verbose']) {
-      echo $index->getItems();
+      $index->dumpItems();
     }
   }
 

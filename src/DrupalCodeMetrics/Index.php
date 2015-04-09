@@ -44,8 +44,6 @@ class DrupalCodeMetrics_Index
 
     // Obtaining the entity manager.
     $this->entityManager = EntityManager::create($this->options['database'], $config);
-
-
   }
 
   /**
@@ -86,6 +84,7 @@ class DrupalCodeMetrics_Index
     if (! is_dir($dir)) {
       throw new Exception("'$dir' is not a folder or could not be found.");
     }
+    $dir = rtrim($dir, '/');
 
     if ($this->options['verbose']) {
       error_log("Indexing $dir \n");
