@@ -19,8 +19,7 @@
  *
  * @Entity @Table(name="products")
  */
-class DrupalCodeMetrics_Module
-{
+class DrupalCodeMetrics_Module {
   /**
    * @Id
    * @Column(type="integer")
@@ -29,10 +28,26 @@ class DrupalCodeMetrics_Module
   protected $id;
 
   /**
+   * Machine name.
+   *
    * @Column(type="string")
    * @var string
    */
   protected $name;
+
+  /**
+   * Human name.
+   *
+   * @Column(type="string", nullable=true)
+   * @var string
+   */
+  protected $label;
+
+  /**
+   * @Column(type="string", nullable=true)
+   * @var string
+   */
+  protected $description;
 
   /**
    * @Column(type="string", nullable=true)
@@ -74,22 +89,5 @@ class DrupalCodeMetrics_Module
       $this->$varname = reset($arguments);
     }
   }
-
-/*
-  public function getId()
-  {
-    return $this->id;
-  }
-
-  public function getName()
-  {
-    return $this->name;
-  }
-
-  public function setName($name)
-  {
-    $this->name = $name;
-  }
-*/
 
 }

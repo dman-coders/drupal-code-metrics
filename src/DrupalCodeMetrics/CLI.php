@@ -14,10 +14,11 @@ require_once "bootstrap.php";
  */
 class DrupalCodeMetrics_CLI {
 
-  private $options;
-  private $defaultOptions;
-  private $defaultShortOptions;
-  private $args;
+  private $options = array();
+  private $defaultOptions = array();
+  private $defaultShortOptions = array();
+  private $args = array();
+  private $index ;
 
   /**
    * Constructs a CLI context.
@@ -33,27 +34,35 @@ class DrupalCodeMetrics_CLI {
 
   /**
    * Run it.
-   **/
+   */
   public function process() {
     // Initialize the index, which is both the worker
     // and the interface to the database.
-    $index = new DrupalCodeMetrics_Index();
+    $this->index = new DrupalCodeMetrics_Index();
 
     // Fetch the list of expected commandline options from the Index object
     // definition itself.
     // We don't know what additional options may eventually be added, so
     // let it tell us.
-    $this->defaultOptions = $index->defaultOptions();
+    $this->defaultOptions = $this->index->defaultOptions();
     $this->getCommandlineArguments();
     // $this->options and $this->args are now set.
     //
-    $index->setOptions($this->options);
+    $this->index->setOptions($this->options);
     foreach ($this->args as $path) {
-      $index->indexFolder($path);
+      $this->index->indexFolder($path);
     }
     if ($this->options['verbose']) {
-      $index->dumpItems();
+      $this->index->dumpItems();
     }
+  }
+
+  /**
+   * Loop over the remaining queued tasks.
+   */
+  public function runTasks() {
+    print __FUNCTION__;
+    $this->index->runTasks();
   }
 
   /**
@@ -63,7 +72,7 @@ class DrupalCodeMetrics_CLI {
    */
   private function getCommandlineArguments() {
     // Extract the expected --options from context and set them on this object.
-    $longopts  = array();
+    $longopts = array();
     foreach ($this->defaultOptions as $key => $val) {
       $longopts[] = $key . "::";
     }

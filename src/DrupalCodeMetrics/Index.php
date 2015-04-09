@@ -2,9 +2,6 @@
 /**
  * @file
  * Definition of an 'Index' Class.
- *
- *
- *
  */
 
 use Doctrine\ORM\Tools\Setup;
@@ -13,20 +10,21 @@ use Doctrine\ORM\EntityManager;
 /**
  * An Index is a container for all the modules.
  */
-class DrupalCodeMetrics_Index
-{
+class DrupalCodeMetrics_Index {
 
   private $options;
   private $args;
   public $entityManager;
 
+  const REPO = "DrupalCodeMetrics_Module";
+
   /**
+   * Date of the last run.
+   *
    * @Column(type="datetime", nullable=true)
    * @var DateTime
    */
   protected $updated;
-
-
 
   /**
    * Constructs an index.
@@ -36,6 +34,8 @@ class DrupalCodeMetrics_Index
    * Or, as it's called, the $entity_manager;
    */
   public function __construct($options = array()) {
+    include_once 'drupal.inc';
+
     $this->options = $options + $this->defaultOptions();
 
     // Scan the current directory to find our serializable objects -
@@ -56,10 +56,24 @@ class DrupalCodeMetrics_Index
   }
 
   /**
+   * Get the (one) item that matches the coditions.
+   *
+   * @param array $conditions
+   *   EG array('name' => 'views', 'version' => '7.x-2.16')
+   *
+   * @return null|DrupalCodeMetrics_Module
+   */
+  public function findItem($conditions) {
+    return $this->entityManager
+      ->getRepository(self::REPO)
+      ->findOneBy($conditions);
+  }
+
+  /**
    * Retrieve all items in the index so far.
    */
   public function getItems() {
-    $itemRepository = $this->entityManager->getRepository('DrupalCodeMetrics_Module');
+    $itemRepository = $this->entityManager->getRepository(self::REPO);
     $items = $itemRepository->findAll();
     return $items;
   }
@@ -70,18 +84,37 @@ class DrupalCodeMetrics_Index
   public function dumpItems() {
     $items = $this->getItems();
     foreach ($items as $item) {
-      echo sprintf(" %-30s %-5s \n", $item->getName(), $item->getStatus());
+      echo sprintf(" %-10s %-30s %-5s %-10s \n", $item->getID(), $item->getName(), $item->getStatus(), $item->getVersion());
     }
+  }
+
+
+  /**
+   * Find a queued task that needs processing.
+   */
+  public function getNextTask($status = 'pending') {
+    $qb = $this->entityManager->createQueryBuilder();
+    $qb->select('R.name', 'R.status')
+      ->from(self::REPO, 'R')
+      ->where(
+        $qb->expr()->eq('R.status', ":status")
+      )
+      ->orderBy('R.updated', 'ASC')
+      ->setMaxResults(1);
+
+    $qb->setParameter('status', $status);
+
+    return $qb->getQuery()->getSingleResult();
   }
 
   /**
    * Scan the given folder and add all projects we find to the index.
    *
-   * @param string $path
+   * @param string $dir
    *   Path to scan.
    */
   public function indexFolder($dir) {
-    if (! is_dir($dir)) {
+    if (!is_dir($dir)) {
       throw new Exception("'$dir' is not a folder or could not be found.");
     }
     $dir = rtrim($dir, '/');
@@ -133,20 +166,39 @@ class DrupalCodeMetrics_Index
     }
   }
 
+  private function findInfoFile($dir) {
+    $mask = '/\.info$/';
+    if (!($handle = opendir($dir))) {
+      return NULL;
+    }
+    // Info file is almost always named after the folder.
+    // If not, scan and will have to take the first in fo we find.
+    $info_file = $dir . '/' . basename($dir) . '.info';
+    if (! file_exists($info_file)) {
+      while (FALSE !== ($filename = readdir($handle))) {
+        $uri = "$dir/$filename";
+        if (preg_match($mask, $filename, $matches)) {
+          return $info_file;
+        }
+      }
+    }
+    closedir($handle);
+    return $info_file;
+  }
+
   /**
    * Register the given path as a module project to look at.
    *
    * Does not immediately process it, but flags it as pending and gives it a
    * timestamp.
+   * Returns NULL if the entry already exists, and does not add a new entry.
    *
-   * @param $location
+   * @param string $location
    *   Folder name.
    */
-  function enqueueFolder($location) {
+  public function enqueueFolder($location) {
     // First, see if we already know about it.
-
     // If not, make a location entry and serialize it.
-
     $module = new DrupalCodeMetrics_Module();
     $module->setName(basename($location));
     $module->setLocation($location);
@@ -154,9 +206,46 @@ class DrupalCodeMetrics_Index
     $module->setUpdated($now);
     $module->setStatus('pending');
 
+    if ($info_file = $this->findInfoFile($location)) {
+      $info = drupal_parse_info_file($info_file);
+      $module->setLabel($info['name']);
+      if (isset($info['description'])) {
+        $module->setDescription($info['description']);
+      }
+      if (isset($info['version'])) {
+        $module->setVersion($info['version']);
+      }
+    }
+    else {
+      $module->setStatus('no info');
+    }
+    // If this Module+version exists in the DB already, don't save.
+    $conditions = array('name' => $module->getName(), 'version' => $module->getVersion());
+    $found = $this->findItem($conditions);
+    if ($found) {
+      $conditions['location'] = $module->getLocation();
+      error_log(strtr("Have already registered module name version at location. Skipping it.", $conditions));
+      return;
+    }
+
     $this->entityManager->persist($module);
     $this->entityManager->flush();
 
+  }
+
+
+  public function runTasks() {
+    $under_the_limit = 5;
+    print __FUNCTION__;
+
+    while ($under_the_limit && ($task = $this->getNextTask())) {
+      print "running";
+      print_r($task);
+
+      $this->runScan($task['location']);
+
+      $under_the_limit --;
+    }
   }
 
   /**
@@ -167,7 +256,7 @@ class DrupalCodeMetrics_Index
     // for now
     // vendor/bin/doctrine orm:schema-tool:drop --force
     // vendor/bin/doctrine orm:schema-tool:create
-    #$this->entityManager->create();
+    // $this->entityManager->create();
   }
 
   /**
@@ -208,6 +297,5 @@ class DrupalCodeMetrics_Index
       $this->$varname = reset($arguments);
     }
   }
-
 
 }
