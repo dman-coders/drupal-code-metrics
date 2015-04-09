@@ -6,7 +6,8 @@
  * For the benefit of Doctrine Entity DB Schema auto-configuration.
  * Describing my vars here will create a corresponding Database table.
  *
- * Following the guide at http://doctrine-orm.readthedocs.org/en/latest/tutorials/getting-started.html
+ * Following the guide at
+ * http://doctrine-orm.readthedocs.org/en/latest/tutorials/getting-started.html
  */
 
 /**
@@ -18,7 +19,7 @@
  *
  * @Entity @Table(name="products")
  */
-class Module
+class DrupalCodeMetrics_Module
 {
   /**
    * @Id
@@ -51,6 +52,11 @@ class Module
    */
   protected $updated;
 
+  /**
+   * @Column(type="string", nullable=true)
+   * @var string
+   */
+  protected $status;
 
   /**
    * Magic method to catch getters and setters.
@@ -67,10 +73,8 @@ class Module
     elseif ($getset == 'set') {
       $this->$varname = reset($arguments);
     }
-
-    print_r(get_defined_vars());
-#    return $this->invoke($operation, $arguments);
   }
+
 /*
   public function getId()
   {

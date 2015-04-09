@@ -1,0 +1,25 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Runs a scan over a given path and adds the found items to the module index.
+ *
+ * PHP version 5
+ *
+ * @category PHP
+ *
+ * @package DrupalCodeMetrics
+ *
+ * @author Dan Morrison <dan@coders.co.nz>
+ *
+ * @link http://coders.co.nz/dcm
+ * @link https://github.com/dman-coders
+ */
+
+if (is_file(dirname(__FILE__).'/../DrupalCodeMetrics/CLI.php') === true) {
+    include_once dirname(__FILE__).'/../DrupalCodeMetrics/CLI.php';
+} else {
+    include_once 'src/DrupalCodeMetrics/CLI.php';
+}
+
+$cli = new DrupalCodeMetrics_CLI();
+$cli->createIndex();
