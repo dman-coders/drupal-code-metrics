@@ -2,6 +2,9 @@
 /**
  * @file
  * Handle CLI invocation.
+ *
+ * This handles the bits that are specific to being run by hand - the parsing
+ * of commandline arguments.
  */
 
 require_once "bootstrap.php";
@@ -32,20 +35,24 @@ class DrupalCodeMetrics_CLI {
    * Run it.
    **/
   public function process() {
+    // Initialize the index, which is both the worker
+    // and the interface to the database.
     $index = new DrupalCodeMetrics_Index();
+
     // Fetch the list of expected commandline options from the Index object
-    // definition. We don't know what additional options may be added.
+    // definition itself.
+    // We don't know what additional options may eventually be added, so
+    // let it tell us.
     $this->defaultOptions = $index->defaultOptions();
     $this->getCommandlineArguments();
     // $this->options and $this->args are now set.
-
+    //
     $index->setOptions($this->options);
     foreach ($this->args as $path) {
       $index->indexFolder($path);
     }
     if ($this->options['verbose']) {
       echo $index->getItems();
-
     }
   }
 

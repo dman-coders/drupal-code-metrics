@@ -61,16 +61,24 @@ class DrupalCodeMetrics_Index
    * Retrieve all items in the index so far.
    */
   public function getItems() {
+    $itemRepository = $this->entityManager->getRepository('DrupalCodeMetrics_Module');
+    $items = $itemRepository->findAll();
+    return $items;
+  }
 
-    $productRepository = $this->entityManager->getRepository('DrupalCodeMetrics_Module');
-    $products = $productRepository->findAll();
-
-    foreach ($products as $product) {
-      echo sprintf(" %-30s %-5s \n", $product->getName(), $product->getStatus());
+  /**
+   * Dump all items in the index so far.
+   */
+  public function dumpItems() {
+    $items = $this->getItems();
+    foreach ($items as $item) {
+      echo sprintf(" %-30s %-5s \n", $item->getName(), $item->getStatus());
     }
   }
 
   /**
+   * Scan the given folder and add all projects we find to the index.
+   *
    * @param string $path
    *   Path to scan.
    */
@@ -79,7 +87,9 @@ class DrupalCodeMetrics_Index
       throw new Exception("'$dir' is not a folder or could not be found.");
     }
 
-    print_r("Indexing $dir \n");
+    if ($this->options['verbose']) {
+      error_log("Indexing $dir \n");
+    }
     // Recurse through the folder listings.
     // When we find an info file, mark that as a project root.
     $mask = '/\.info$/';
