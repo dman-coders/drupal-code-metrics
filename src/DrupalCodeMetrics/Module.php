@@ -29,7 +29,7 @@ namespace DrupalCodeMetrics;
  * @Entity @Table(name="products")
  */
 class Module {
-  #use LoggableTrait;
+  use LoggableTrait;
 
   /**
    * @Id
@@ -140,7 +140,6 @@ class Module {
       }
     }
     return $codefiles;
-
   }
 
   /**

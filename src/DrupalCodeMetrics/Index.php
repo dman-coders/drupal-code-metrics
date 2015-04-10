@@ -14,6 +14,7 @@ use Doctrine\ORM\EntityManager;
  * An Index is a container for all the modules.
  */
 class Index {
+  use LoggableTrait;
 
   private $options;
   private $args;
@@ -269,11 +270,11 @@ class Index {
 
       // Tell the module to init info about itself
       $tree = $module->getDirectoryTree();
-      $this->log($tree);
+      #$this->log($tree);
       $filecount = $module->getFilecount();
       $this->log("filecount is $filecount");
       $codefilecount = $module->getCodeFilecount($this->options['extensions']);
-      $this->log("codefilecount is $filecount");
+      $this->log("codefilecount is $codefilecount");
 
       # $this->runScan($task['location']);
 
@@ -290,15 +291,6 @@ class Index {
     // vendor/bin/doctrine orm:schema-tool:drop --force
     // vendor/bin/doctrine orm:schema-tool:create
     // $this->entityManager->create();
-  }
-
-  private function log($message, $label = '') {
-    if (! $this->options['verbose']) {
-      return;
-    }
-    $out = $label ? $label . " : " : "";
-    $out .= is_string($message) ? $message : var_export($message, 1);
-    error_log($out);
   }
 
   /**
