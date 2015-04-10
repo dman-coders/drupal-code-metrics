@@ -4,19 +4,22 @@
  * Definition of an 'Index' Class.
  */
 
+namespace DrupalCodeMetrics;
+
+
 use Doctrine\ORM\Tools\Setup;
 use Doctrine\ORM\EntityManager;
 
 /**
  * An Index is a container for all the modules.
  */
-class DrupalCodeMetrics_Index {
+class Index {
 
   private $options;
   private $args;
   public $entityManager;
 
-  const REPO = "DrupalCodeMetrics_Module";
+  const REPO = "DrupalCodeMetrics\\Module";
 
   /**
    * Date of the last run.
@@ -25,6 +28,27 @@ class DrupalCodeMetrics_Index {
    * @var DateTime
    */
   protected $updated;
+
+  /**
+   * Define the expected option parameters.
+   *
+   * This list is used to extract info from the commandline,
+   * as well as to pre-set useful defaults.
+   *
+   * @return array
+   *   Options.
+   */
+  public function defaultOptions() {
+    return array(
+      'extensions' => 'module,php,inc',
+      'verbose' => TRUE,
+      'database' => array(
+        'driver' => 'pdo_sqlite',
+        'path' => 'db.sqlite',
+      ),
+      'is_dev_mode' => TRUE,
+    );
+  }
 
   /**
    * Constructs an index.
@@ -94,7 +118,7 @@ class DrupalCodeMetrics_Index {
    */
   public function getNextTask($status = 'pending') {
     $qb = $this->entityManager->createQueryBuilder();
-    $qb->select('R.name', 'R.status')
+    $qb->select('R.name', 'R.version', 'R.status')
       ->from(self::REPO, 'R')
       ->where(
         $qb->expr()->eq('R.status', ":status")
@@ -199,10 +223,10 @@ class DrupalCodeMetrics_Index {
   public function enqueueFolder($location) {
     // First, see if we already know about it.
     // If not, make a location entry and serialize it.
-    $module = new DrupalCodeMetrics_Module();
+    $module = new Module();
     $module->setName(basename($location));
     $module->setLocation($location);
-    $now = new DateTime();
+    $now = new \DateTime();
     $module->setUpdated($now);
     $module->setStatus('pending');
 
@@ -236,13 +260,22 @@ class DrupalCodeMetrics_Index {
 
   public function runTasks() {
     $under_the_limit = 5;
-    print __FUNCTION__;
 
     while ($under_the_limit && ($task = $this->getNextTask())) {
-      print "running";
-      print_r($task);
+      $this->log($task, "Running");
 
-      $this->runScan($task['location']);
+      // The scans are run by the Module object, not from above.
+      $module = $this->findItem($task);
+
+      // Tell the module to init info about itself
+      $tree = $module->getDirectoryTree();
+      $this->log($tree);
+      $filecount = $module->getFilecount();
+      $this->log("filecount is $filecount");
+      $codefilecount = $module->getCodeFilecount($this->options['extensions']);
+      $this->log("codefilecount is $filecount");
+
+      # $this->runScan($task['location']);
 
       $under_the_limit --;
     }
@@ -259,27 +292,14 @@ class DrupalCodeMetrics_Index {
     // $this->entityManager->create();
   }
 
-  /**
-   * Define the expected option parameters.
-   *
-   * This list is used to extract info from the commandline,
-   * as well as to pre-set useful defaults.
-   *
-   * @return array
-   *   Options.
-   */
-  public function defaultOptions() {
-    return array(
-      'extensions' => 'module,php,inc',
-      'verbose' => TRUE,
-      'database' => array(
-        'driver' => 'pdo_sqlite',
-        'path' => 'db.sqlite',
-      ),
-      'is_dev_mode' => TRUE,
-    );
+  private function log($message, $label = '') {
+    if (! $this->options['verbose']) {
+      return;
+    }
+    $out = $label ? $label . " : " : "";
+    $out .= is_string($message) ? $message : var_export($message, 1);
+    error_log($out);
   }
-
 
   /**
    * Magic method to catch getters and setters.

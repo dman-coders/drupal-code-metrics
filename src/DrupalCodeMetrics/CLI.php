@@ -7,12 +7,14 @@
  * of commandline arguments.
  */
 
+namespace DrupalCodeMetrics;
+
 require_once "bootstrap.php";
 
 /**
  * Class DrupalCodeMetrics_CLI.
  */
-class DrupalCodeMetrics_CLI {
+class CLI {
 
   private $options = array();
   private $defaultOptions = array();
@@ -38,7 +40,7 @@ class DrupalCodeMetrics_CLI {
   public function process() {
     // Initialize the index, which is both the worker
     // and the interface to the database.
-    $this->index = new DrupalCodeMetrics_Index();
+    $this->index = new Index();
 
     // Fetch the list of expected commandline options from the Index object
     // definition itself.
