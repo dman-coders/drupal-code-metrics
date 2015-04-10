@@ -26,7 +26,7 @@ namespace DrupalCodeMetrics;
  * Ones with the same name and version but different locations are
  * assumed to be identical.
  *
- * @Entity @Table(name="products")
+ * @Entity @Table(name="module")
  */
 class Module {
   use LoggableTrait;
@@ -150,6 +150,7 @@ class Module {
    *
    * @return array
    *   Files keyed by filepath relative to location.
+   *   Values are the absolute filepath.
    */
   public function getDirectoryTree($location = NULL, $prefix = '') {
     if (! $location) {
@@ -166,11 +167,24 @@ class Module {
         $files += $this->getDirectoryTree($file->getPathname(), $foldername . DIRECTORY_SEPARATOR);
       }
       else {
-        $files[$prefix . $file->getFilename()] = $file->getFilename();
+        $files[$prefix . $file->getFilename()] = $file->getPathname();
       }
     }
     return $files;
 
+  }
+
+  /**
+   * Runs PHP LinesOfCode analysis
+   *
+   * https://github.com/sebastianbergmann/phploc
+   */
+  function getLOCAnalysis() {
+    // Run phploc analyser directly as PHP.
+    $analyser = new \SebastianBergmann\PHPLOC\Analyser();
+    $tree = $this->getDirectoryTree();
+    $analysis = $analyser->countFiles($tree, TRUE);
+    return $analysis;
   }
 
   /**

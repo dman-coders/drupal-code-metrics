@@ -5,6 +5,9 @@
  *
  * This handles the bits that are specific to being run by hand - the parsing
  * of commandline arguments.
+ *
+ * TODO - See if we can use found Symfony\Component\Console\Application instead.
+ * http://symfony.com/doc/current/components/console/introduction.html
  */
 
 namespace DrupalCodeMetrics;

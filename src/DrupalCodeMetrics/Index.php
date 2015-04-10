@@ -140,7 +140,7 @@ class Index {
    */
   public function indexFolder($dir) {
     if (!is_dir($dir)) {
-      throw new Exception("'$dir' is not a folder or could not be found.");
+      throw new \Exception("'$dir' is not a folder or could not be found.");
     }
     $dir = rtrim($dir, '/');
 
@@ -268,7 +268,7 @@ class Index {
       // The scans are run by the Module object, not from above.
       $module = $this->findItem($task);
 
-      // Tell the module to init info about itself
+      // Tell the module to init info about itself.
       $tree = $module->getDirectoryTree();
       #$this->log($tree);
       $filecount = $module->getFilecount();
@@ -277,9 +277,47 @@ class Index {
       $this->log("codefilecount is $codefilecount");
 
       # $this->runScan($task['location']);
+      // Run phploc analyser directly as PHP.
+      #$this->log($module->getLOCAnalysis());
+      $this->runLOCReport($module);
+
+      // Flag this is done so the queue can proceed.
+      $module->setStatus('processed-loc');
+      $this->entityManager->persist($module);
+      $this->entityManager->flush();
 
       $under_the_limit --;
     }
+  }
+
+
+  function runLOCReport($module) {
+    // Look for an existing one before adding or updating.
+    $conditions = array('name' => $module->getName(), 'version' => $module->getVersion());
+    $identifier = implode('-', $conditions);
+    $found = $this->entityManager
+      ->getRepository('DrupalCodeMetrics\\LOCReport')
+      ->findOneBy($conditions);
+
+    if ($found) {
+      $report = $found;
+      $this->log("Setting LOC report for $identifier, It's an update");
+    }
+    else {
+      $report = new LOCReport();
+      $this->log("Setting LOC report, It's new");
+    }
+
+    $report->setName($module->getName());
+    $report->setVersion($module->getVersion());
+    $now = new \DateTime();
+    $report->setUpdated($now);
+    $analysis = $module->getLOCAnalysis();
+    $report->setAnalysis($analysis);
+    $this->entityManager->persist($report);
+    $this->entityManager->flush();
+
+    $this->log($report, __FUNCTION__);
   }
 
   /**
