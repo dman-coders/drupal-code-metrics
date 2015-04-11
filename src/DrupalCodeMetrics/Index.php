@@ -54,12 +54,12 @@ class Index {
       'extensions' => 'module,php,inc',
       'verbose' => TRUE,
       'flush' => FALSE,
-      'max_tasks' => 5,
+      'max-tasks' => 5,
       'database' => array(
         'driver' => 'pdo_sqlite',
         'path' => 'db.sqlite',
       ),
-      'is_dev_mode' => TRUE,
+      'is-dev-mode' => TRUE,
       // set --index to list projects
       'index' => FALSE,
       // set --tasks to process any outstanding tasks.
@@ -83,20 +83,12 @@ class Index {
 
     // Scan the current directory to find our serializable objects -
     // the Module object schema definition.
-    $config = Setup::createAnnotationMetadataConfiguration(array(__DIR__), $this->options['is_dev_mode']);
+    $config = Setup::createAnnotationMetadataConfiguration(array(__DIR__), $this->options['is-dev-mode']);
 
     // Obtaining the entity manager.
     $this->entityManager = EntityManager::create($this->options['database'], $config);
   }
 
-  /**
-   * @return int
-   *   Count.
-   */
-  public function getCount() {
-    return 43;
-
-  }
 
   /**
    * Get the (one) item that matches the coditions.
@@ -104,7 +96,7 @@ class Index {
    * @param array $conditions
    *   EG array('name' => 'views', 'version' => '7.x-2.16')
    *
-   * @return null|DrupalCodeMetrics_Module
+   * @return null|Module
    */
   public function findItem($conditions) {
     return $this->entityManager
@@ -153,6 +145,9 @@ class Index {
   /**
    * Scan the given folder and add all projects we find to the index.
    *
+   * @throws \Exception
+   *   on FileNotFound.
+   *
    * @param string $dir
    *   Path to scan.
    */
@@ -171,14 +166,12 @@ class Index {
     // Record that in our record set.
     $found = array();
     $dirs = array();
-    $all = array();
     if ($handle = opendir($dir)) {
       while (FALSE !== ($filename = readdir($handle))) {
         if ($filename[0] == '.') {
           continue;
         }
         $uri = "$dir/$filename";
-        $all[] = $uri;
         if (preg_match($mask, $filename, $matches)) {
           $found[] = $uri;
         }
@@ -219,7 +212,6 @@ class Index {
     $info_file = $dir . '/' . basename($dir) . '.info';
     if (! file_exists($info_file)) {
       while (FALSE !== ($filename = readdir($handle))) {
-        $uri = "$dir/$filename";
         if (preg_match($mask, $filename, $matches)) {
           return $info_file;
         }
@@ -283,16 +275,27 @@ class Index {
    * The $max_tasks limit will only process so many Modules at once.
    */
   public function runTasks() {
-    $max_tasks = $this->options['max_tasks'];
+    $max_tasks = $this->options['max-tasks'];
     $this->log("Starting to run tasks, processing anything 'pending' in the queue. Only running $max_tasks tasks at a time, to avoid overload.");
 
     while ($max_tasks && ($task = $this->getNextTask())) {
-      $this->log($task, "Running");
+      $this->log($task, "Running task");
 
       // The scans are run by the Module object, not from above.
       $module = $this->findItem($task);
 
       // Tell the module to init info about itself.
+
+      // Check it's still valid-ish before proceeding.
+      // The dir may have gone away in the meantime.
+      if (! is_dir($module->getLocation())) {
+        error_log('Module Directory has gome missing.');
+        $module->setStatus('failed-missing');
+        $this->entityManager->persist($module);
+        $this->entityManager->flush();
+        continue;
+      }
+
       $tree = $module->getDirectoryTree();
       $filecount = $module->getFilecount();
       $this->log("filecount is $filecount");
@@ -345,9 +348,20 @@ class Index {
     $this->entityManager->persist($report);
     $this->entityManager->flush();
 
-    $this->log($report, __FUNCTION__ . " (" . $module->getName() . ")");
+    // $this->log($report, __FUNCTION__ . " (" . $module->getName() . ")");
     return $report;
   }
+
+
+  /**
+   * Retrieve all items in the index so far.
+   */
+  public function getLocReports() {
+    $itemRepository = $this->entityManager->getRepository('DrupalCodeMetrics\\LOCReport');
+    $items = $itemRepository->findAll();
+    return $items;
+  }
+
 
   /**
    * Drop the current database and start again.

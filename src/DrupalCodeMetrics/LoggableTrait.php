@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Adds the log() method to a class.
+ *   Adds the log() method to a class.
  *
  * My first experiment with traits. This project is a learning experience...
  */
@@ -18,8 +18,10 @@ trait LoggableTrait
    *
    * If the object has no options, log anyway.
    *
-   * @param $message
+   * @param string|object|array $message
+   *   Message to display.
    * @param string $label
+   *   Additional label.
    */
   private function log($message, $label = '') {
     if (isset($this->options) && empty($this->options['verbose'])) {

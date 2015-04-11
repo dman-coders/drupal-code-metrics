@@ -105,7 +105,9 @@ class LOCReport {
    */
   public function __call($operation, $arguments) {
     $getset = substr($operation, 0, 3);
-    $varname = strtolower(substr($operation, 3));
+    $rawVarName = substr($operation, 3);
+      //drop first cap, keep other caps.
+    $varname = lcfirst($rawVarName);
     if ($getset == 'get') {
       return $this->$varname;
     }
