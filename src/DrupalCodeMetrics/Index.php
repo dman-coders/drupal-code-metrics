@@ -2,11 +2,21 @@
 /**
  * @file
  * Definition of an 'Index' Class.
+ *
+ * This application runs in several phases.
+ *
+ * The first phase loops through the given folder structure and enumerates
+ * the modules found there. It just notes them into the Modules table,
+ * and does not process them immerdiately.
+ *
+ * The next phase then goes back to the Modules table and pops off any 'pending'
+ * entries one by one, and performs the staic code analysis on it.
+ *
+ * This is so this process can be robustly stopped, started, restarted
+ * or backgrounded without having to re-index from the top each time.
  */
 
 namespace DrupalCodeMetrics;
-
-
 use Doctrine\ORM\Tools\Setup;
 use Doctrine\ORM\EntityManager;
 
@@ -43,11 +53,19 @@ class Index {
     return array(
       'extensions' => 'module,php,inc',
       'verbose' => TRUE,
+      'flush' => FALSE,
+      'max_tasks' => 5,
       'database' => array(
         'driver' => 'pdo_sqlite',
         'path' => 'db.sqlite',
       ),
       'is_dev_mode' => TRUE,
+      // set --index to list projects
+      'index' => FALSE,
+      // set --tasks to process any outstanding tasks.
+      'tasks' => FALSE,
+      // set --dump to list the results when done.
+      'dump' => FALSE,
     );
   }
 
@@ -129,7 +147,7 @@ class Index {
 
     $qb->setParameter('status', $status);
 
-    return $qb->getQuery()->getSingleResult();
+    return $qb->getQuery()->getOneOrNullResult();
   }
 
   /**
@@ -145,7 +163,7 @@ class Index {
     $dir = rtrim($dir, '/');
 
     if ($this->options['verbose']) {
-      error_log("Indexing $dir \n");
+      $this->log("Indexing $dir");
     }
     // Recurse through the folder listings.
     // When we find an info file, mark that as a project root.
@@ -247,9 +265,9 @@ class Index {
     // If this Module+version exists in the DB already, don't save.
     $conditions = array('name' => $module->getName(), 'version' => $module->getVersion());
     $found = $this->findItem($conditions);
-    if ($found) {
+    if ($found && !$this->options['flush']) {
       $conditions['location'] = $module->getLocation();
-      error_log(strtr("Have already registered module name version at location. Skipping it.", $conditions));
+      error_log(strtr("Have already registered module name version at location. Skipping it. Pass in the --flush flag to reset and force a re-scan.", $conditions));
       return;
     }
 
@@ -259,10 +277,16 @@ class Index {
   }
 
 
+  /**
+   * Retrieve queued tasks - Modules in a 'pending' state - and scan them.
+   *
+   * The $max_tasks limit will only process so many Modules at once.
+   */
   public function runTasks() {
-    $under_the_limit = 5;
+    $max_tasks = $this->options['max_tasks'];
+    $this->log("Starting to run tasks, processing anything 'pending' in the queue. Only running $max_tasks tasks at a time, to avoid overload.");
 
-    while ($under_the_limit && ($task = $this->getNextTask())) {
+    while ($max_tasks && ($task = $this->getNextTask())) {
       $this->log($task, "Running");
 
       // The scans are run by the Module object, not from above.
@@ -270,28 +294,32 @@ class Index {
 
       // Tell the module to init info about itself.
       $tree = $module->getDirectoryTree();
-      #$this->log($tree);
       $filecount = $module->getFilecount();
       $this->log("filecount is $filecount");
       $codefilecount = $module->getCodeFilecount($this->options['extensions']);
       $this->log("codefilecount is $codefilecount");
 
-      # $this->runScan($task['location']);
       // Run phploc analyser directly as PHP.
-      #$this->log($module->getLOCAnalysis());
-      $this->runLOCReport($module);
+      $loc_report = $this->runLocReport($module);
+      if (!$loc_report) {
+        $this->log("LOCReport on " . $module->getName() . " failed. Not updating it.");
+        $module->setStatus('failed-loc');
+
+      }
+      else {
+        $module->setStatus('processed-loc');
+      }
 
       // Flag this is done so the queue can proceed.
-      $module->setStatus('processed-loc');
       $this->entityManager->persist($module);
       $this->entityManager->flush();
 
-      $under_the_limit --;
+      $max_tasks --;
     }
   }
 
 
-  function runLOCReport($module) {
+  public function runLocReport(Module $module) {
     // Look for an existing one before adding or updating.
     $conditions = array('name' => $module->getName(), 'version' => $module->getVersion());
     $identifier = implode('-', $conditions);
@@ -301,23 +329,24 @@ class Index {
 
     if ($found) {
       $report = $found;
-      $this->log("Setting LOC report for $identifier, It's an update");
+      $this->log("Updating existing LOC report for $identifier");
     }
     else {
       $report = new LOCReport();
-      $this->log("Setting LOC report, It's new");
+      $this->log("Creating new LOC report for $identifier");
     }
 
     $report->setName($module->getName());
     $report->setVersion($module->getVersion());
     $now = new \DateTime();
     $report->setUpdated($now);
-    $analysis = $module->getLOCAnalysis();
+    $analysis = $report->getLocAnalysis($module, $this->options['extensions']);
     $report->setAnalysis($analysis);
     $this->entityManager->persist($report);
     $this->entityManager->flush();
 
-    $this->log($report, __FUNCTION__);
+    $this->log($report, __FUNCTION__ . " (" . $module->getName() . ")");
+    return $report;
   }
 
   /**

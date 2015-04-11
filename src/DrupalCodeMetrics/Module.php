@@ -16,8 +16,8 @@
  * http://doctrine-orm.readthedocs.org/en/latest/tutorials/getting-started.html
  */
 
-
 namespace DrupalCodeMetrics;
+use Symfony\Component\Config\Definition\Exception\Exception;
 
 /**
  * A Module, defined by its name, location and version.
@@ -36,7 +36,7 @@ class Module {
    * @Column(type="integer")
    * @GeneratedValue
    */
-  protected $id;
+  public $id;
 
   /**
    * Machine name.
@@ -44,7 +44,7 @@ class Module {
    * @Column(type="string")
    * @var string
    */
-  protected $name;
+  public $name;
 
   /**
    * Human name.
@@ -52,19 +52,19 @@ class Module {
    * @Column(type="string", nullable=true)
    * @var string
    */
-  protected $label;
+  public $label;
 
   /**
    * @Column(type="string", nullable=true)
    * @var string
    */
-  protected $description;
+  public $description;
 
   /**
    * @Column(type="string", nullable=true)
    * @var string
    */
-  protected $version;
+  public $version;
 
   /**
    * @Column(type="string", nullable=true)
@@ -148,6 +148,9 @@ class Module {
    * @param string $location
    *   Filepath.
    *
+   * @param string $prefix
+   *   Internal use.
+   *
    * @return array
    *   Files keyed by filepath relative to location.
    *   Values are the absolute filepath.
@@ -174,18 +177,6 @@ class Module {
 
   }
 
-  /**
-   * Runs PHP LinesOfCode analysis
-   *
-   * https://github.com/sebastianbergmann/phploc
-   */
-  function getLOCAnalysis() {
-    // Run phploc analyser directly as PHP.
-    $analyser = new \SebastianBergmann\PHPLOC\Analyser();
-    $tree = $this->getDirectoryTree();
-    $analysis = $analyser->countFiles($tree, TRUE);
-    return $analysis;
-  }
 
   /**
    * Magic method to catch getters and setters.

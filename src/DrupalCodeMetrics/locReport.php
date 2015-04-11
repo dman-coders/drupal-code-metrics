@@ -68,11 +68,33 @@ class LOCReport {
    *   All the values from a LOC Analyser.
    */
   public function setAnalysis($analysis) {
-    $this->analysis = $analysis;
+    #$this->analysis = $analysis;
     foreach ($analysis as $key => $val) {
       $this->$key = $val;
     }
-    $this->log(__FUNCTION__);
+  }
+
+  /**
+   * Runs PHP LinesOfCode analysis
+   *
+   * https://github.com/sebastianbergmann/phploc
+   */
+  function getLocAnalysis(Module $module, $extensions) {
+    // Run phploc analyser directly as PHP.
+    $analyser = new \SebastianBergmann\PHPLOC\Analyser();
+    // It's my job to set the parameters right, and take care to only give it
+    // PHP files (it borks on binaries, understandably).
+    $tree = $module->getCodeFiles($extensions);
+    $analysis = NULL;
+    try {
+      $analysis = $analyser->countFiles($tree, TRUE);
+    }
+    catch (Exception $e) {
+      $message = "When processing " . $module->location . " " . $e->getMessage();
+      error_log($e->getMessage());
+    }
+
+    return $analysis;
   }
 
   /**

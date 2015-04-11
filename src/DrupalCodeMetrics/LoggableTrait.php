@@ -22,11 +22,17 @@ trait LoggableTrait
    * @param string $label
    */
   private function log($message, $label = '') {
-    if (isset($this->options) && ! $this->options['verbose']) {
+    if (isset($this->options) && empty($this->options['verbose'])) {
       return;
     }
     $out = $label ? $label . " : " : "";
     $out .= is_string($message) ? $message : var_export($message, 1);
-    error_log($out);
+    // Where this message is coming from is handy to know.
+    $stack = debug_backtrace();
+    $caller = $stack[0];
+    $caller2 = $stack[1];
+    $caller_info = "${caller['file']}:${caller['line']} ${caller2['function']}(); ";
+
+    error_log($out . "\n    -- $caller_info");
   }
 }

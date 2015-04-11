@@ -26,4 +26,3 @@ else {
 $cli = new DrupalCodeMetrics\CLI();
 $cli->process();
 
-$cli->runTasks();
