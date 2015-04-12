@@ -63,6 +63,7 @@ class Application extends AbstractApplication {
     // Load the available command definitions.
     $defaultCommands[] = new Command\ReportCommand();
     $defaultCommands[] = new Command\IndexCommand();
+    $defaultCommands[] = new Command\ScanCommand();
     return $defaultCommands;
   }
 

@@ -70,6 +70,10 @@ class Index {
     );
   }
 
+  public function setOption($opt, $val) {
+    $this->options[$opt] = $val;
+  }
+
   /**
    * Constructs an index.
    *
@@ -128,12 +132,13 @@ class Index {
   }
 
   /**
-   * Dump all items in the index so far.
+   * Dump summary of all items in the index so far.
    */
   public function dumpItems() {
     $items = $this->getItems();
+    $width = exec('tput cols');
     foreach ($items as $item) {
-      echo sprintf(" %-10s %-30s %-5s %-10s \n", $item->getID(), $item->getName(), $item->getStatus(), $item->getVersion());
+      echo substr(sprintf(" %-10s %-30s %-15s %-5s", $item->getID(), $item->getName(), $item->getVersion(), $item->getStatus()), 0, $width) . PHP_EOL;
     }
   }
 
@@ -327,7 +332,7 @@ class Index {
       }
       else {
         // If we are here, I guess all tasks possible for this module are done.
-        $module->removeStatus('queue:complete');
+        $module->removeStatus('queue:pending');
         $module->addStatus('queue:complete');
         $this->entityManager->persist($module);
         $this->entityManager->flush();
@@ -337,6 +342,14 @@ class Index {
     }
   }
 
+  /**
+   * Execute the named scan on the named module.
+   *
+   * Will always update the module with a status change.
+   *
+   * @param Module $module
+   * @param $scan
+   */
   function runScan(Module $module, $scan) {
     $funcname = "run" . ucfirst($scan) . "Scan";
     if (method_exists($this, $funcname)) {
@@ -349,13 +362,29 @@ class Index {
     }
     $this->entityManager->persist($module);
     $this->entityManager->flush();
-
   }
 
+  /**
+   * Extract metadata from the Module .info file.
+   *
+   * @param Module $module
+   *
+   * @return Module
+   */
   public function runInfoScan(Module $module) {
     // Extract basic info and register the module.
     if ($info_file = $this->findInfoFile($module->getLocation())) {
       $info = drupal_parse_info_file($info_file);
+
+      // Faulty info files cause warnings for me.
+      if (empty($info['name'])) {
+        // Exception handling.
+        $info['name'] = "Bad Info";
+        $info['description'] = $info_file;
+        $module->addStatus('info:failed');
+      }
+
+      $info += array('name' => "Bad info");
       $module->setLabel($info['name']);
       if (isset($info['description'])) {
         $module->setDescription($info['description']);

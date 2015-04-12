@@ -17,23 +17,18 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class IndexCommand extends Command {
+class ScanCommand extends Command {
 
   protected function configure()
   {
     $this
-      ->setName('index:list')
+      ->setName('index:scan')
       ->setDescription('Recurse a folder to enumerate the modules in it.')
-      ->addArgument(
-        'path',
-        InputArgument::IS_ARRAY | InputArgument::REQUIRED,
-        'Filepath to scan'
-      )
       ->addOption(
-        'process',
-        null,
-        InputOption::VALUE_NONE,
-        'Also start the process of running the scans on it. This takes longer than just listing them.'
+        'max-tasks',
+        10,
+        InputOption::VALUE_OPTIONAL,
+        'Number of tasks to process.'
       )
       ->addOption(
         'reset',
@@ -52,20 +47,17 @@ class IndexCommand extends Command {
 
   protected function execute(InputInterface $input, OutputInterface $output)
   {
-    $paths = $input->getArgument('path');
-
-    if ($input->getOption('process')) {
-      $output->writeln("Will scan and process things we find there.");
-    }
-
     // Initialize the index, which is both the worker
     // and the interface to the database.
     $options = $this->getApplication()->options;
     $index = new Index($options);
 
-    foreach ($paths as $path) {
-      $index->indexFolder($path);
+    if ($max_tasks = $input->getOption('max-tasks')) {
+      $index->setOption('max-tasks', $max_tasks);
     }
+
+    $index->runTasks();
+
   }
 
 }

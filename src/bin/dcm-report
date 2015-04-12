@@ -14,7 +14,6 @@ foreach (array(__DIR__ . '/../../autoload.php', __DIR__ . '/../../vendor/autoloa
     break;
   }
 }
-
 if (!$loaded) {
   die(
     'You need to set up the project dependencies using the following commands:' . PHP_EOL .
@@ -23,9 +22,7 @@ if (!$loaded) {
   );
 }
 
-
-$loaded = false;
-
+// Try to load a bootstrap setup file which tells us where the database is.
 foreach (array(__DIR__ . '/../../bootstrap.php', __DIR__ . '/../../../bootstrap.php') as $file) {
   if (file_exists($file)) {
     require $file;
@@ -33,13 +30,12 @@ foreach (array(__DIR__ . '/../../bootstrap.php', __DIR__ . '/../../../bootstrap.
     break;
   }
 }
-
-if (!isset($conn)) {
+if (isset($conn)) {
   $options = array('database' => $conn);
 }
 else {
   print(
-    'Cannot find bootstrap.php. This is expected to contain a database connectino string, and is required if you want to be sure of using the same database each time' . PHP_EOL;
+    'Cannot find bootstrap.php. This is expected to contain a database connection string \$conn, and is required if you want to be sure of using the same database each time' . PHP_EOL
   );
   $options['database'] = array(
     'driver' => 'pdo_sqlite',
@@ -49,5 +45,6 @@ else {
 
 
 $application = new DrupalCodeMetrics\Application('DrupalCodeMetrics console', '0.0-alpha');
+$application->options = $options;
 $application->run();
 
