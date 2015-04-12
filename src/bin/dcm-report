@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+// I don't know where I will be called from -
+// this script may be placed in the 'vendor/bin' directory when distributed.
+// or it's in the src/bin or root of the project during development or
+// stand-alone use.
+
+$loaded = false;
+
+foreach (array(__DIR__ . '/../../autoload.php', __DIR__ . '/../../vendor/autoload.php') as $file) {
+  if (file_exists($file)) {
+    require $file;
+    $loaded = true;
+    break;
+  }
+}
+
+if (!$loaded) {
+  die(
+    'You need to set up the project dependencies using the following commands:' . PHP_EOL .
+    'wget http://getcomposer.org/composer.phar' . PHP_EOL .
+    'php composer.phar install' . PHP_EOL
+  );
+}
+
+use DrupalCodeMetrics\IndexCommand;
+use Symfony\Component\Console\Application;
+
+$application = new Application();
+$application->add(new IndexCommand());
+$application->run();
