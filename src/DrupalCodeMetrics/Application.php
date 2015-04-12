@@ -33,12 +33,6 @@ class Application extends AbstractApplication {
 
   public function __construct() {
     parent::__construct();
-    /*
-    $indexCommand = new Command\IndexCommand();
-    $this->addCommands(array(
-       $indexCommand,
-    ));
-    */
 
     /*
     I own the database connection configs, so that the commands don't have to.

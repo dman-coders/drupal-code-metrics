@@ -24,19 +24,30 @@ if (!$loaded) {
 }
 
 
+$loaded = false;
+
+foreach (array(__DIR__ . '/../../bootstrap.php', __DIR__ . '/../../../bootstrap.php') as $file) {
+  if (file_exists($file)) {
+    require $file;
+    $loaded = true;
+    break;
+  }
+}
+
+if (!isset($conn)) {
+  $options = array('database' => $conn);
+}
+else {
+  print(
+    'Cannot find bootstrap.php. This is expected to contain a database connectino string, and is required if you want to be sure of using the same database each time' . PHP_EOL;
+  );
+  $options['database'] = array(
+    'driver' => 'pdo_sqlite',
+    'path' => __DIR__ . '/../../db.sqlite',
+  );
+}
 
 
 $application = new DrupalCodeMetrics\Application('DrupalCodeMetrics console', '0.0-alpha');
 $application->run();
 
-/*
-
-use DrupalCodeMetrics\IndexCommand;
-use DrupalCodeMetrics\ReportCommand;
-use Symfony\Component\Console\Application;
-
-$application = new Application();
-$application->add(new IndexCommand());
-$application->add(new ReportCommand());
-$application->run();
-*/
