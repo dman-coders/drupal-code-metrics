@@ -132,18 +132,6 @@ class Index {
   }
 
   /**
-   * Dump summary of all items in the index so far.
-   */
-  public function dumpItems() {
-    $items = $this->getItems();
-    $width = exec('tput cols');
-    foreach ($items as $item) {
-      echo substr(sprintf(" %-10s %-30s %-15s %-5s", $item->getID(), $item->getName(), $item->getVersion(), $item->getStatus()), 0, $width) . PHP_EOL;
-    }
-  }
-
-
-  /**
    * Find a queued task that needs processing.
    *
    * Find the next job that is neither 'failed' nor 'complete'

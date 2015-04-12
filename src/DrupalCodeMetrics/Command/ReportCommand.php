@@ -22,6 +22,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class ReportCommand extends Command {
 
+  private $output;
+  private $index;
 
   protected function configure() {
     $this
@@ -33,27 +35,47 @@ class ReportCommand extends Command {
         NULL,
         InputOption::VALUE_OPTIONAL,
         'Format for return data. values may be [json,cst,tsxt]'
+      )
+      ->addOption(
+        'locreport',
+        NULL,
+        InputOption::VALUE_NONE,
+        'Include the  (Lines of Code) complexity report from PHPLoC'
       );
   }
 
   protected function execute(InputInterface $input, OutputInterface $output) {
+    $this->output = $output;
     if ($input->getOption('format')) {
     }
 
     $output->writeln("Dump the contents of the tables");
 
     $options = $this->getApplication()->options;
-    $index = new Index($options);
-
-    // Prepare some info to display.
-    $status['count'] = $index->getCount();
-    $status['progress'] = 'fine';
+    $this->index = new Index($options);
 
     // Prepare some more info to display.
-    $items = $index->getItems();
+    $items = $this->index->getItems();
     print_r($items);
 
-    $index->dumpItems();
+    $this->dumpItems();
+
+    if ($input->getOption('locreport')) {
+      $locReports = $this->index->getLocReports();
+      print_r($locReports);
+    }
+  }
+
+  /**
+   * Dump summary of all items in the index so far.
+   */
+  public function dumpItems() {
+    $items = $this->index->getItems();
+    $width = exec('tput cols');
+    foreach ($items as $item) {
+      $out = substr(sprintf(" %-10s %-30s %-15s %-5s", $item->getID(), $item->getName(), $item->getVersion(), $item->getStatus()), 0, $width);
+      $this->output->writeln($out);
+    }
   }
 
 }

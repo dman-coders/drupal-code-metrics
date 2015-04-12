@@ -1,28 +1,50 @@
 #!/usr/bin/env php
 <?php
-/**
- * @file
- * Runs a scan over a given path and adds the found items to the module index.
- *
- * PHP version 5
- *
- * @category PHP
- *
- * @package DrupalCodeMetrics
- *
- * @author Dan Morrison <dan@coders.co.nz>
- *
- * @link http://coders.co.nz/dcm
- * @link https://github.com/dman-coders
- */
+// I don't know where I will be called from -
+// this script may be placed in the 'vendor/bin' directory when distributed.
+// or it's in the src/bin or root of the project during development or
+// stand-alone use.
 
-if (is_file(dirname(__FILE__) . '/../DrupalCodeMetrics/CLI.php') === TRUE) {
-  include_once dirname(__FILE__) . '/../DrupalCodeMetrics/CLI.php';
+$loaded = false;
+
+foreach (array(__DIR__ . '/../../autoload.php', __DIR__ . '/../../vendor/autoload.php') as $file) {
+  if (file_exists($file)) {
+    require $file;
+    $loaded = true;
+    break;
+  }
+}
+if (!$loaded) {
+  die(
+    'You need to set up the project dependencies using the following commands:' . PHP_EOL .
+    'wget http://getcomposer.org/composer.phar' . PHP_EOL .
+    'php composer.phar install' . PHP_EOL
+  );
+}
+
+// Try to load a bootstrap setup file which tells us where the database is.
+foreach (array(__DIR__ . '/../../bootstrap.php', __DIR__ . '/../../../bootstrap.php') as $file) {
+  if (file_exists($file)) {
+    require $file;
+    $loaded = true;
+    break;
+  }
+}
+if (isset($conn)) {
+  $options = array('database' => $conn);
 }
 else {
-  include_once 'src/DrupalCodeMetrics/CLI.php';
+  print(
+    'Cannot find bootstrap.php. This is expected to contain a database connection string \$conn, and is required if you want to be sure of using the same database each time' . PHP_EOL
+  );
+  $options['database'] = array(
+    'driver' => 'pdo_sqlite',
+    'path' => __DIR__ . '/../../db.sqlite',
+  );
 }
 
-$cli = new DrupalCodeMetrics\CLI();
-$cli->process();
+
+$application = new DrupalCodeMetrics\Application('DrupalCodeMetrics console', '0.0-alpha');
+$application->options = $options;
+$application->run();
 
