@@ -5,7 +5,6 @@
  *
  * Defines that we are going to use a DB.
  *
- *
  * From http://doctrine-orm.readthedocs.org/en/latest/tutorials/getting-started.html
  */
 use Doctrine\ORM\Tools\Setup;

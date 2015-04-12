@@ -72,8 +72,9 @@ class Index {
   /**
    * Constructs an index.
    *
-   * The index is the promary way of talking to the database,
-   * so it can own the DB handle.
+   * The index is the primary way of talking to the database,
+   * It is the engine you interact with most.
+   * So it can own the DB handle.
    * Or, as it's called, the $entity_manager;
    */
   public function __construct($options = array()) {
@@ -89,6 +90,18 @@ class Index {
     $this->entityManager = EntityManager::create($this->options['database'], $config);
   }
 
+  /**
+   * List the available scans. These will be used as keywords in the status.
+   */
+  public function listScans() {
+    return array(
+      'info',
+      'content',
+      'loc',
+      'sniff',
+      'hacked',
+    );
+  }
 
   /**
    * Get the (one) item that matches the coditions.
@@ -126,18 +139,20 @@ class Index {
 
   /**
    * Find a queued task that needs processing.
+   *
+   * Find the next job that is neither 'failed' nor 'complete'
    */
   public function getNextTask($status = 'pending') {
     $qb = $this->entityManager->createQueryBuilder();
     $qb->select('R.name', 'R.version', 'R.status')
-      ->from(self::REPO, 'R')
-      ->where(
-        $qb->expr()->eq('R.status', ":status")
-      )
+      ->from('DrupalCodeMetrics\Module', 'R')
+      ->andWhere("(NOT R.status LIKE '%failed%')")
+      ->andWhere("(NOT R.status LIKE '%complete%')")
       ->orderBy('R.updated', 'ASC')
       ->setMaxResults(1);
 
-    $qb->setParameter('status', $status);
+#    $qb->setParameter('failed', 'failed');
+#    $qb->setParameter('complete', 'complete');
 
     return $qb->getQuery()->getOneOrNullResult();
   }
@@ -239,9 +254,106 @@ class Index {
     $module->setLocation($location);
     $now = new \DateTime();
     $module->setUpdated($now);
-    $module->setStatus('pending');
+    $module->setStatus('queue:pending');
 
-    if ($info_file = $this->findInfoFile($location)) {
+    // Extract basic .info name and version.
+    $this->runInfoScan($module);
+
+    // If this Module+version exists in the DB already, don't save.
+    $conditions = array('name' => $module->getName(), 'version' => $module->getVersion());
+    $found = $this->findItem($conditions);
+    if ($found) {
+      if ($this->options['flush']) {
+        // Remove the pre-existing one.
+        $this->entityManager->remove($found);
+      }
+      else {
+        $conditions['location'] = $found->getLocation();
+        $conditions['status'] = $found->getStatus();
+        error_log(strtr("Have already registered module name version at location , Status is status. Not re-enqueing it. Pass in the --flush flag to reset and force a re-scan.", $conditions));
+        return;
+      }
+    }
+
+    $this->entityManager->persist($module);
+    $this->entityManager->flush();
+  }
+
+
+  /**
+   * Retrieve queued tasks - Modules in a 'pending' state - and scan them.
+   *
+   * For every incomplete module, find a task we can do on it,
+   * and run just that one task.
+   * After running that task, go back to the queue for more.
+   * This may give us the same module again with a new task.
+   * Repeat until done.
+   *
+   * This is a queuing engine - but one which stores all its state in the data
+   * objects themselves.
+   * - Get me somebody who needs something done
+   * - figure out what needs to be done
+   * - do it
+   * - throw it back in the pile
+   *
+   * The $max_tasks limit will only process so many tasks at once.
+   */
+  public function runTasks() {
+    $max_tasks = $this->options['max-tasks'];
+    $scans = $this->listScans();
+    $this->log("Starting to run tasks, processing anything incomplete in the queue. Only running $max_tasks tasks at a time, to avoid overload.");
+
+    while ($max_tasks && ($task = $this->getNextTask())) {
+      $module = $this->findItem($task);
+      $this->log($task, "Running next available task on '$module->name', The batch job instructions are ");
+
+      // Figure out which scans on this item have not been done yet.
+      $scan_to_run = '';
+      foreach ($scans as $scan) {
+        $scanstatus = $module->checkStatus($scan);
+        if (empty($scanstatus)) {
+          // Have not run the $scan scan yet.
+          $scan_to_run = $scan;
+          break;
+        }
+        else {
+          // $scan scan was run already.
+          // $this->log("'$module->name' status has already run '$scan' scan");
+        }
+      }
+      if (!empty($scan_to_run)) {
+        $this->runScan($module, $scan_to_run);
+      }
+      else {
+        // If we are here, I guess all tasks possible for this module are done.
+        $module->removeStatus('queue:complete');
+        $module->addStatus('queue:complete');
+        $this->entityManager->persist($module);
+        $this->entityManager->flush();
+      }
+
+      $max_tasks --;
+    }
+  }
+
+  function runScan(Module $module, $scan) {
+    $funcname = "run" . ucfirst($scan) . "Scan";
+    if (method_exists($this, $funcname)) {
+      $this->log("Running '$scan' scan on $module->name'");
+      $this->$funcname($module);
+    }
+    else {
+      $this->log("No expected function $funcname available yet.");
+      $module->addStatus("$scan:unavailable");
+    }
+    $this->entityManager->persist($module);
+    $this->entityManager->flush();
+
+  }
+
+  public function runInfoScan(Module $module) {
+    // Extract basic info and register the module.
+    if ($info_file = $this->findInfoFile($module->getLocation())) {
       $info = drupal_parse_info_file($info_file);
       $module->setLabel($info['name']);
       if (isset($info['description'])) {
@@ -250,79 +362,40 @@ class Index {
       if (isset($info['version'])) {
         $module->setVersion($info['version']);
       }
+      $module->addStatus('info:processed');
     }
     else {
-      $module->setStatus('no info');
+      $module->addStatus('info:failed');
     }
-    // If this Module+version exists in the DB already, don't save.
-    $conditions = array('name' => $module->getName(), 'version' => $module->getVersion());
-    $found = $this->findItem($conditions);
-    if ($found && !$this->options['flush']) {
-      $conditions['location'] = $module->getLocation();
-      error_log(strtr("Have already registered module name version at location. Skipping it. Pass in the --flush flag to reset and force a re-scan.", $conditions));
-      return;
-    }
-
-    $this->entityManager->persist($module);
-    $this->entityManager->flush();
-
+    return $module;
   }
-
 
   /**
-   * Retrieve queued tasks - Modules in a 'pending' state - and scan them.
+   * Tell the module to init info about itself.
    *
-   * The $max_tasks limit will only process so many Modules at once.
+   * Check it's still valid-ish and has files and an info file.
+   * The dir may have gone away in the meantime.
+   *
+   * @param $module
+   *
+   * @return Module
    */
-  public function runTasks() {
-    $max_tasks = $this->options['max-tasks'];
-    $this->log("Starting to run tasks, processing anything 'pending' in the queue. Only running $max_tasks tasks at a time, to avoid overload.");
-
-    while ($max_tasks && ($task = $this->getNextTask())) {
-      $this->log($task, "Running task");
-
-      // The scans are run by the Module object, not from above.
-      $module = $this->findItem($task);
-
-      // Tell the module to init info about itself.
-
-      // Check it's still valid-ish before proceeding.
-      // The dir may have gone away in the meantime.
-      if (! is_dir($module->getLocation())) {
-        error_log('Module Directory has gome missing.');
-        $module->setStatus('failed-missing');
-        $this->entityManager->persist($module);
-        $this->entityManager->flush();
-        continue;
-      }
-
-      $tree = $module->getDirectoryTree();
-      $filecount = $module->getFilecount();
-      $this->log("filecount is $filecount");
-      $codefilecount = $module->getCodeFilecount($this->options['extensions']);
-      $this->log("codefilecount is $codefilecount");
-
-      // Run phploc analyser directly as PHP.
-      $loc_report = $this->runLocReport($module);
-      if (!$loc_report) {
-        $this->log("LOCReport on " . $module->getName() . " failed. Not updating it.");
-        $module->setStatus('failed-loc');
-
-      }
-      else {
-        $module->setStatus('processed-loc');
-      }
-
-      // Flag this is done so the queue can proceed.
-      $this->entityManager->persist($module);
-      $this->entityManager->flush();
-
-      $max_tasks --;
+  public function runContentScan(Module $module) {
+    if (! is_dir($module->getLocation())) {
+      error_log('Module Directory has gome missing.');
+      $module->addStatus('content:failed-missing');
     }
+    else {
+      $filecount = $module->getFilecount();
+      $this->log("$module->name filecount is $filecount");
+      $codefilecount = $module->getCodeFilecount($this->options['extensions']);
+      $this->log("$module->name codefilecount is $codefilecount");
+      $module->addStatus('content:processed');
+    }
+    return $module;
   }
 
-
-  public function runLocReport(Module $module) {
+  public function runLocScan(Module $module) {
     // Look for an existing one before adding or updating.
     $conditions = array('name' => $module->getName(), 'version' => $module->getVersion());
     $identifier = implode('-', $conditions);
@@ -348,8 +421,14 @@ class Index {
     $this->entityManager->persist($report);
     $this->entityManager->flush();
 
-    // $this->log($report, __FUNCTION__ . " (" . $module->getName() . ")");
-    return $report;
+    if (!$analysis) {
+      $this->log("LOCReport on " . $module->getName() . " failed. Not updating it.");
+      $module->addStatus('loc:failed');
+    }
+    else {
+      $module->addStatus('loc:processed');
+    }
+    return $this;
   }
 
 
@@ -389,6 +468,10 @@ class Index {
     elseif ($getset == 'set') {
       $this->$varname = reset($arguments);
     }
+    else {
+      throw new BadMethodCallException("No such method $operation on " . __CLASS__);
+    }
+    return $this;
   }
 
 }

@@ -75,7 +75,6 @@ class CLI {
    * Loop over the remaining queued tasks.
    */
   public function runTasks() {
-    print __FUNCTION__;
     $this->index->runTasks();
   }
 

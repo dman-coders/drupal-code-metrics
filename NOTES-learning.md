@@ -35,3 +35,32 @@ Then in PHPStorm click the 'Listen' button - next to but not inside the
  (Xdebug must also be enabled in your php.ini already.)
 
  Breakboints shouold now work.
+
+## Method chaining
+
+TL;DR:
+When you can think of nothing better to return from an OO method,
+return $this.
+
+http://www.techflirt.com/tutorials/oop-in-php/php-method-chaining.html
+
+Setters, and action triggers with no volatile reponses, can return the
+ current object, so as to allow chaining such as
+
+   $object
+     ->setName('Harry')
+     ->setStatus('updated')
+     ->update();
+
+It's the new sexy way it seems. It's been happening in jquery for ever,
+and is spreading through the other languages now.
+Already seen in the PHP Database Abstraction layers.
+
+Note that method chaining leave less space for assertions or error catching!
+This may in turn lead to more need for exception blocks in some cases.
+Exception-based control flow is NOT a great paradigm.
+So don't over-use method chaining when code can still be broken up into
+intermediate steps for validation, logging, or even just code-tracing.
+
+If setting out to use method chaining a lot, do step the commands out onto new
+lines as illustrated above.

@@ -1,3 +1,7 @@
+# Autoloading classes from here
+
+@tag tutorial
+
 Class definitions found in here will become available for autoloading
 thanks to the line in composer.json
 

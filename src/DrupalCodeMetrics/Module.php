@@ -102,6 +102,11 @@ class Module {
    */
   protected $documentationcount;
 
+  /**
+   * @var $modified
+   *   Note if I am in need of a save or not.
+   */
+  protected $modified;
 
   public function getFilecount($flush = FALSE) {
     if (isset($this->filecount) && !$flush) {
@@ -177,6 +182,88 @@ class Module {
 
   }
 
+  /**
+   * Add a value to our status field.
+   *
+   * Status ids will be like "info:processed" or "codereview:failed".
+   * Internally they get serialized into a string for searching.
+   *
+   * @param $status
+   */
+  public function addStatus($status) {
+    $statuslist = $this->getStatuslist();
+    list($process,$stat) = explode(':', $status);
+    $statuslist[$process][$stat] = TRUE;
+    $this->setStatuslist($statuslist);
+    return $this;
+  }
+
+  public function removeStatus($status) {
+    $statuslist = $this->getStatuslist();
+    list($process,$stat) = explode(':', $status);
+    unset($statuslist[$process][$stat]);
+    $this->setStatuslist($statuslist);
+    return $this;
+  }
+
+  /**
+   * See if our status includes a stat for the named scan.
+   *
+   * @param $scan
+   */
+  public function checkStatus($scan) {
+    $statuslist = $this->getStatuslist();
+    if (isset($statuslist[$scan])) {
+      return $statuslist[$scan];
+    }
+    return NULL;
+  }
+
+  /**
+   * Explode the status (concatenated string) into different statuses.
+   *
+   * Internal status may be "info:processed,style:processed,style:warnings"
+   *
+   * @return array
+   *   a nested structure of stats,
+   *   - info
+   *   - - processed
+   *   - style
+   *   - - processed
+   *   - - warnings
+   */
+  protected function getStatuslist() {
+    $statii = explode(',', $this->status);
+    $statuslist = array();
+    foreach ($statii as $status) {
+      @list($process, $stat) = explode(':', $status);
+      $statuslist[$process][$stat] = TRUE;
+    }
+    return $statuslist;
+  }
+
+  /**
+   * Convert a structured list of stats into a status string and serialize it.
+   *
+   * @param $statuslist
+   *
+   * @return mixed
+   */
+  protected function setStatuslist($statuslist) {
+    $flatlist = array();
+    foreach ($statuslist as $process => $stats) {
+      foreach ($stats as $stat => $flag) {
+        if ($flag) {
+          $key = "${process}:${stat}";
+          $flatlist[] = $key;
+        }
+      }
+    }
+    $this->status = implode(',', $flatlist);
+    $this->modified = TRUE;
+    return $statuslist;
+  }
+
 
   /**
    * Magic method to catch getters and setters.
@@ -192,6 +279,9 @@ class Module {
     }
     elseif ($getset == 'set') {
       $this->$varname = reset($arguments);
+    }
+    else {
+      throw new BadMethodCallException("No such method $operation on " . __CLASS__);
     }
   }
 
