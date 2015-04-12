@@ -34,6 +34,18 @@ class IndexCommand extends Command {
         InputOption::VALUE_NONE,
         'Also start the process of running the scans on it. This takes longer than just listing them.'
       )
+      ->addOption(
+        'reset',
+        null,
+        InputOption::VALUE_NONE,
+        'Drops the database index completely before running.'
+      )
+      ->addOption(
+        'flush',
+        null,
+        InputOption::VALUE_NONE,
+        'Will overwrite and re-index any module previously found.'
+      )
     ;
   }
 

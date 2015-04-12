@@ -64,3 +64,11 @@ intermediate steps for validation, logging, or even just code-tracing.
 
 If setting out to use method chaining a lot, do step the commands out onto new
 lines as illustrated above.
+
+## Console output in Synfony
+
+Don't bother with the Symfony\Component\Console\Helper\Table;
+It's atrocious - does not handle wrapping - which is the one thing it would
+be worth using a library for.
+If the cols are to big, it just farts on the screen.
+

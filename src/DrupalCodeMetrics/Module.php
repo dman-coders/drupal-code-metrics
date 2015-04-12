@@ -30,6 +30,7 @@ use Symfony\Component\Config\Definition\Exception\Exception;
  */
 class Module {
   use LoggableTrait;
+  use AutoGetSetTrait;
 
   /**
    * @Id
@@ -264,25 +265,5 @@ class Module {
     return $statuslist;
   }
 
-
-  /**
-   * Magic method to catch getters and setters.
-   *
-   * I'm lazy, just pretend that getName and setName and that bollocks
-   * works until I really need to do something special to them.
-   */
-  public function __call($operation, $arguments) {
-    $getset = substr($operation, 0, 3);
-    $varname = strtolower(substr($operation, 3));
-    if ($getset == 'get') {
-      return $this->$varname;
-    }
-    elseif ($getset == 'set') {
-      $this->$varname = reset($arguments);
-    }
-    else {
-      throw new BadMethodCallException("No such method $operation on " . __CLASS__);
-    }
-  }
 
 }
