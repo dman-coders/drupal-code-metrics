@@ -28,4 +28,5 @@ use Symfony\Component\Console\Application;
 
 $application = new Application();
 $application->add(new IndexCommand());
+$application->add(new ReportCommand());
 $application->run();
