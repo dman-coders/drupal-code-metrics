@@ -23,10 +23,20 @@ if (!$loaded) {
   );
 }
 
+
+
+
+$application = new DrupalCodeMetrics\Application;
+$application->run();
+
+/*
+
 use DrupalCodeMetrics\IndexCommand;
+use DrupalCodeMetrics\ReportCommand;
 use Symfony\Component\Console\Application;
 
 $application = new Application();
 $application->add(new IndexCommand());
 $application->add(new ReportCommand());
 $application->run();
+*/

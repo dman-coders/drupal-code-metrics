@@ -7,7 +7,7 @@
  * http://symfony.com/doc/current/components/console/introduction.html
  */
 
-namespace DrupalCodeMetrics;
+namespace DrupalCodeMetrics\Command;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -21,36 +21,31 @@ class IndexCommand extends Command {
   protected function configure()
   {
     $this
-      ->setName('demo:greet')
-      ->setDescription('Greet someone')
+      ->setName('index:scan')
+      ->setDescription('Recurse a folder to enumerate the modules in it.')
       ->addArgument(
-        'name',
-        InputArgument::OPTIONAL,
-        'Who do you want to greet?'
+        'path',
+        InputArgument::REQUIRED,
+        'Filepath to scan'
       )
       ->addOption(
-        'yell',
+        'process',
         null,
         InputOption::VALUE_NONE,
-        'If set, the task will yell in uppercase letters'
+        'Also start the process of running the scans on it. This takes longer than just listing them.'
       )
     ;
   }
 
   protected function execute(InputInterface $input, OutputInterface $output)
   {
-    $name = $input->getArgument('name');
-    if ($name) {
-      $text = 'Hello '.$name;
-    } else {
-      $text = 'Hello';
+    $path = $input->getArgument('path');
+    $output->writeln("About to index the contents of $path");
+
+    if ($input->getOption('process')) {
+      $output->writeln("Will scan and process things we find there.");
     }
 
-    if ($input->getOption('yell')) {
-      $text = strtoupper($text);
-    }
-
-    $output->writeln($text);
   }
 
 }
