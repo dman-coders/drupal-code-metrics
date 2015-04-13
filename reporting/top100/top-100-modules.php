@@ -99,7 +99,7 @@ $items = $index->getLocReports();
 // Flatten and serialize to JSON.
 // Return label, metric1, metric2, colour, size.
 $graph_data = array(
-  array('Name', 'Complexity', 'Maintainability', '?', 'Size',),
+  array('Name', 'Complexity', 'Maintainability', '?', 'Size (exponential)',),
 );
 foreach ($items as $item) {
 
@@ -112,10 +112,11 @@ foreach ($items as $item) {
   $doc_ratio = $item->getcloc() / $item->getloc();
   // I don't like complexity per loc.
   // $complexity = $item->getccnByLloc();
-
   // Remake that as complexity per number of functions.
   $total_complexity = $item->getccnByLloc() * $item->getLloc();
   $complexity = $total_complexity / ($item->getFunctions() + $item->getMethods());
+
+  // Use sqrt of size for comparison to illustrate better variety.
 
   $tag = 'contrib';
   if (preg_match('/^\d.\d+$/', $item->getVersion())) {
@@ -124,10 +125,10 @@ foreach ($items as $item) {
   }
   $graph_data[] = array(
     $item->getName(),
-    round($complexity, 1),
-    round($doc_ratio * 100), // complexity
+    round($complexity, 2),
+    round($doc_ratio * 100),
     $tag,
-    $item->getloc()
+    sqrt($item->getloc())
   );
 }
 print_r(json_encode($graph_data));

@@ -25,11 +25,16 @@
 
             //var data = new google.visualization.DataTable(jsonData);
 
+            // Tweak the options for usability,
+            // and to ensure consistency of scale.
+
             var options = {
                 title: 'Distribution of code metrics among Drupal modules',
-                hAxis: {title: 'Code complexity'},
-                vAxis: {title: 'Code maintainability'},
-                bubble: {textStyle: {fontSize: 11}}
+                hAxis: {title: 'Code complexity', baseline: 0},
+                vAxis: {title: 'Code maintainability', baseline: 0, maxValue:50},
+                bubble: {textStyle: {fontSize: 11}},
+                explorer: {keepInBounds:true,zoomDelta:1.03,maxZoomOut:1.2},
+
             };
 
             var chart = new google.visualization.BubbleChart(document.getElementById('chart_div'));
