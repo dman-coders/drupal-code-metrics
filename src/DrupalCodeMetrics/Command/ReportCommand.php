@@ -22,7 +22,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class ReportCommand extends Command {
 
+  /**
+   * @var OutputInterface
+   */
   private $output;
+
   private $index;
 
   protected function configure() {
@@ -33,7 +37,7 @@ class ReportCommand extends Command {
       ->addOption(
         'format',
         NULL,
-        InputOption::VALUE_OPTIONAL,
+        InputOption::VALUE_REQUIRED,
         'Format for return data. values may be [json,cst,tsxt]'
       )
       ->addOption(
@@ -56,8 +60,7 @@ class ReportCommand extends Command {
 
     // Prepare some more info to display.
     $items = $this->index->getItems();
-    print_r($items);
-
+    // print_r($items);
     $this->dumpItems();
 
     if ($input->getOption('locreport')) {
@@ -71,7 +74,8 @@ class ReportCommand extends Command {
    */
   public function dumpItems() {
     $items = $this->index->getItems();
-    $width = exec('tput cols');
+    $dimensions = $this->getApplication()->getTerminalDimensions();
+    $width = $dimensions[0];
     foreach ($items as $item) {
       $out = substr(sprintf(" %-10s %-30s %-15s %-5s", $item->getID(), $item->getName(), $item->getVersion(), $item->getStatus()), 0, $width);
       $this->output->writeln($out);

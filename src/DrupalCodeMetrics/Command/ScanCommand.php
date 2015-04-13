@@ -16,6 +16,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 class ScanCommand extends Command {
 
@@ -55,8 +56,15 @@ class ScanCommand extends Command {
     if ($max_tasks = $input->getOption('max-tasks')) {
       $index->setOption('max-tasks', $max_tasks);
     }
+    $max_tasks = $index->getOption('max-tasks');
 
-    $index->runTasks();
+    // Add a progress bar, why not?
+    $progress = new ProgressBar($output, $max_tasks);
+    $progress->start();
+
+    $index->runTasks($progress);
+
+    $progress->finish();
 
   }
 

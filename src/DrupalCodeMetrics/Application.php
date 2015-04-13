@@ -3,7 +3,7 @@
  * @file
  * Console application - for interacting with the index.
  *
- * Set up so that we can do some common configs (like the database connection
+ * Set up so that we can do some common configs (like the database connection)
  * without repeating them in each command.
  *
  * This application is intended to be invoked by the trigger script in 'bin'.
@@ -22,17 +22,36 @@ namespace DrupalCodeMetrics;
 
 use Symfony\Component\Console\Application as AbstractApplication;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * TextUI frontend
  */
 class Application extends AbstractApplication {
+  /**
+   * @var string
+   */
+  const NAME = 'Drupal Console';
+  /**
+   * @var string
+   */
+  const VERSION = '0.7.6';
 
   public $options;
 
   public function __construct() {
-    parent::__construct();
+    parent::__construct($this::NAME, sprintf('%s', $this::VERSION));
+
+    // I can declare global options.
+    $this->getDefinition()->addOption(
+      new InputOption(
+        '--no-debug',
+        null,
+        InputOption::VALUE_NONE,
+        'Switches off debug mode.'
+      )
+    );
 
     /*
     I own the database connection configs, so that the commands don't have to.

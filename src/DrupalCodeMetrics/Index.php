@@ -70,10 +70,6 @@ class Index {
     );
   }
 
-  public function setOption($opt, $val) {
-    $this->options[$opt] = $val;
-  }
-
   /**
    * Constructs an index.
    *
@@ -291,8 +287,11 @@ class Index {
    * - throw it back in the pile
    *
    * The $max_tasks limit will only process so many tasks at once.
+   *
+   * @param \Symfony\Component\Console\Helper\ProgressBar $progress
+   *   Optional Progress ticker.
    */
-  public function runTasks() {
+  public function runTasks($progress = NULL) {
     $max_tasks = $this->options['max-tasks'];
     $scans = $this->listScans();
     $this->log("Starting to run tasks, processing anything incomplete in the queue. Only running $max_tasks tasks at a time, to avoid overload.");
@@ -327,6 +326,10 @@ class Index {
       }
 
       $max_tasks --;
+      if ($progress) {
+        // Console progressbar.
+        $progress->advance();
+      }
     }
   }
 

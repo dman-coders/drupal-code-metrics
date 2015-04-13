@@ -10,6 +10,7 @@ namespace DrupalCodeMetrics;
  * Adds getVariableX() and SetVariableX() functions everywhere.
  */
 trait AutoGetSetTrait {
+  // private $options;
 
   /**
    * Magic method to catch getters and setters.
@@ -19,7 +20,9 @@ trait AutoGetSetTrait {
    */
   public function __call($operation, $arguments) {
     $getset = substr($operation, 0, 3);
-    $varname = strtolower(substr($operation, 3));
+    $rawVarName = substr($operation, 3);
+    // Drop first cap, keep other caps.
+    $varname = lcfirst($rawVarName);
     if ($getset == 'get') {
       return empty($this->$varname) ? NULL : $this->$varname;
     }
@@ -30,6 +33,26 @@ trait AutoGetSetTrait {
       throw new BadMethodCallException("No such method $operation on " . __CLASS__);
     }
     return $this;
+  }
+
+
+  /**
+   * Set options in an assumed $options array.
+   *
+   * @param string $opt
+   * @param mixed $val
+   */
+  public function setOption($opt, $val) {
+    $this->options[$opt] = $val;
+  }
+  /**
+   * Get options in an assumed $options array.
+   *
+   * @param string $opt
+   * @param mixed $val
+   */
+  public function getOption($opt) {
+    return $this->options[$opt];
   }
 
 }

@@ -10,6 +10,7 @@ namespace DrupalCodeMetrics;
  */
 class LOCReport {
   use LoggableTrait;
+  use AutoGetSetTrait;
 
   /** @Id @Column(type="integer") @GeneratedValue */
   protected $id;
@@ -90,30 +91,13 @@ class LOCReport {
       $analysis = $analyser->countFiles($tree, TRUE);
     }
     catch (Exception $e) {
-      $message = "When processing " . $module->location . " " . $e->getMessage();
-      error_log($e->getMessage());
+      $message = "When processing " . $module->getLocation() . " " . $e->getMessage();
+      error_log($message);
     }
 
     return $analysis;
   }
 
-  /**
-   * Magic method to catch getters and setters.
-   *
-   * I'm lazy, just pretend that getName and setName and that bollocks
-   * works until I really need to do something special to them.
-   */
-  public function __call($operation, $arguments) {
-    $getset = substr($operation, 0, 3);
-    $rawVarName = substr($operation, 3);
-      //drop first cap, keep other caps.
-    $varname = lcfirst($rawVarName);
-    if ($getset == 'get') {
-      return $this->$varname;
-    }
-    elseif ($getset == 'set') {
-      $this->$varname = reset($arguments);
-    }
-  }
+
 
 }
