@@ -18,7 +18,18 @@ On second run, it will start running the code sniffer over each module, and calc
 ## Installation
 
 This is a stand-alone tool that can be placed anywhere in your system and
-then linked to or called directly.
+then linked to or called directly. The very quickest way to start is:
+
+  composer global require dman-coders/drupal-code-metrics:dev-master
+
+With that done (it will pull in a lot of libraries) you can now run:
+
+  ~/.composer/vendor/bin/dcm
+
+I advise adding ~/.composer/vendor/bin/ to your $PATH permanently, as it's
+really really helpful to do that.
+This source code is now in ~/.composer/vendor/dman-coders/drupal-code-metrics/
+for you to mess with.
 
 ## Operations
 
