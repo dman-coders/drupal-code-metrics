@@ -8,13 +8,13 @@
 $loaded = false;
 // Autoload location is tricky to find.
 // I'm puzzled there is not a tidier catch-all fix convention.
-$autoloads = array(
-  'run from src in a stand-alone project'           => __DIR__ . '/../../autoload.php',
-  'run from bin in a distributed project, filecopy' => __DIR__ . '/../../vendor/autoload.php',
-  'run from bin in a distributed project, symlink'  => __DIR__ . '/../../../../autoload.php', 
+$bootstraps = array(
+  'run from src in a stand-alone project'           => __DIR__ . '/../../bootstrap.php',
+  'run from bin in a distributed project, filecopy' => __DIR__ . '/../../bootstrap.php',
+  'run from bin in a distributed project, symlink'  => __DIR__ . '/../../bootstrap.php',
 );
 
-foreach ($autoloads as $file) {
+foreach ($bootstraps as $file) {
   if (file_exists($file)) {
     require $file;
     $loaded = true;
@@ -22,9 +22,10 @@ foreach ($autoloads as $file) {
   }
 }
 if (!$loaded) {
-  print_r($autoloads);
+  print_r($bootstraps);
   die(
-    'Cannot find autoload.php nearby' . PHP_EOL .
+    'Cannot find bootstrap.php nearby' . PHP_EOL .
+    'That is expected to do the autoload for me.' . PHP_EOL .
     'You need to set up the project dependencies using the following commands:' . PHP_EOL .
     'wget http://getcomposer.org/composer.phar' . PHP_EOL .
     'php composer.phar install' . PHP_EOL
