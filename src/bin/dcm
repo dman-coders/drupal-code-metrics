@@ -6,8 +6,15 @@
 // stand-alone use.
 
 $loaded = false;
+// Autoload location is tricky to find.
+// I'm puzzled there is not a tidier catch-all fix convention.
+$autoloads = array(
+  'run from src in a stand-alone project'           => __DIR__ . '/../../autoload.php',
+  'run from bin in a distributed project, filecopy' => __DIR__ . '/../../vendor/autoload.php',
+  'run from bin in a distributed project, symlink'  => __DIR__ . '/../../../../autoload.php', 
+);
 
-foreach (array(__DIR__ . '/../../autoload.php', __DIR__ . '/../../vendor/autoload.php') as $file) {
+foreach ($autoloads as $file) {
   if (file_exists($file)) {
     require $file;
     $loaded = true;
@@ -15,34 +22,19 @@ foreach (array(__DIR__ . '/../../autoload.php', __DIR__ . '/../../vendor/autoloa
   }
 }
 if (!$loaded) {
+  print_r($autoloads);
   die(
+    'Cannot find autoload.php nearby' . PHP_EOL .
     'You need to set up the project dependencies using the following commands:' . PHP_EOL .
     'wget http://getcomposer.org/composer.phar' . PHP_EOL .
     'php composer.phar install' . PHP_EOL
   );
 }
 
-// Try to load a bootstrap setup file which tells us where the database is.
-foreach (array(__DIR__ . '/../../bootstrap.php', __DIR__ . '/../../../bootstrap.php') as $file) {
-  if (file_exists($file)) {
-    require $file;
-    $loaded = true;
-    break;
-  }
-}
-if (isset($conn)) {
-  $options = array('database' => $conn);
-}
-else {
-  print(
-    'Cannot find bootstrap.php. This is expected to contain a database connection string \$conn, and is required if you want to be sure of using the same database each time' . PHP_EOL
-  );
-  $options['database'] = array(
-    'driver' => 'pdo_sqlite',
-    'path' => __DIR__ . '/../../db.sqlite',
-  );
-}
-
+$options['database'] = array(
+  'driver' => 'pdo_sqlite',
+  'path' => __DIR__ . '/../../db.sqlite',
+);
 
 $application = new DrupalCodeMetrics\Application('DrupalCodeMetrics console', '0.0-alpha');
 $application->options = $options;
