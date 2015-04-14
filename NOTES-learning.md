@@ -72,3 +72,12 @@ It's atrocious - does not handle wrapping - which is the one thing it would
 be worth using a library for.
 If the cols are to big, it just farts on the screen.
 
+## Namespaces suck in a few ways.
+
+I've only been working with aggressive namespaces and trying to co-operate
+with them (compared to just copy-paste) and already I made many of the
+frustrating discoveries listed here
+https://pornel.net/phpns
+
+I thought I was just doing it wrong, but it's actually missing functinoality
+ - like Fully-qualified name doesn't work in class declaration

@@ -15,6 +15,10 @@ Point it at the root of a Drupal site, or the sites/all/modules path of the site
 It will first index all files and figure out the module folders within that tree
 On second run, it will start running the code sniffer over each module, and calculating ratings for it.
 
+## Installation
+
+This is a stand-alone tool that can be placed anywhere in your system and
+then linked to or called directly.
 
 ## Operations
 
