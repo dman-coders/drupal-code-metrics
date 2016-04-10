@@ -23,7 +23,7 @@ class IndexCommand extends Command {
   {
     $this
       ->setName('index:list')
-      ->setDescription('Recurse a folder to enumerate the modules in it.')
+      ->setDescription('Recurse a folder to enumerate the modules in it. This just counts and queues the found module projects.')
       ->addArgument(
         'path',
         InputArgument::IS_ARRAY | InputArgument::REQUIRED,
@@ -62,6 +62,9 @@ class IndexCommand extends Command {
     // and the interface to the database.
     $options = $this->getApplication()->options;
     $index = new Index($options);
+    // Tell the index where to log to.
+    // This also allows it access to the verbosity option.
+    $index->setoutput($output);
 
     foreach ($paths as $path) {
       $index->indexFolder($path);

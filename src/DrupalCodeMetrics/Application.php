@@ -13,7 +13,7 @@
  *
  * http://symfony.com/doc/current/components/console/single_command_tool.html
  *
- * But the instructins there don't say how to do both at once, like
+ * But the instructions there don't say how to do both at once, like
  * run a default command AND invoke others by name.
  * So we are stuck with the command namespace syntax.
  */
@@ -29,14 +29,16 @@ use Symfony\Component\Console\Output\OutputInterface;
  * TextUI frontend
  */
 class Application extends AbstractApplication {
+
   /**
    * @var string
    */
-  const NAME = 'Drupal Console';
+  const NAME = 'Drupal Code Bitch';
+
   /**
    * @var string
    */
-  const VERSION = '0.7.6';
+  const VERSION = '0.0.0';
 
   public $options;
 

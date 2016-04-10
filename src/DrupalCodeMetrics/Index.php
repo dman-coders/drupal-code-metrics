@@ -3,6 +3,11 @@
  * @file
  * Definition of an 'Index' Class.
  *
+ * This object represents the indexer - the engine that enumerates items
+ * And stores summaries in the DB.
+ *
+ * (Unrelated to website index.php filename convention.)
+ *
  * This application runs in several phases.
  *
  * The first phase loops through the given folder structure and enumerates
@@ -29,6 +34,12 @@ class Index {
 
   private $options;
   private $args;
+
+  /**
+   * @var \Symfony\Component\Console\Helper\ProgressBar
+   */
+  private $progress;
+
   public $entityManager;
 
   const REPO = "DrupalCodeMetrics\\Module";
@@ -53,7 +64,6 @@ class Index {
   public function defaultOptions() {
     return array(
       'extensions' => 'module,php,inc',
-      'verbose' => TRUE,
       'flush' => FALSE,
       'max-tasks' => 5,
       'database' => array(
@@ -162,9 +172,8 @@ class Index {
     }
     $dir = rtrim($dir, '/');
 
-    if ($this->options['verbose']) {
-      $this->log("Indexing $dir");
-    }
+    $this->log("Indexing $dir", 'progress');
+
     // Recurse through the folder listings.
     // When we find an info file, mark that as a project root.
     $mask = '/\.info$/';
@@ -190,8 +199,7 @@ class Index {
     // If I found an info file, note it.
     if (!empty($found)) {
       foreach ($found as $info_file) {
-        print "** Found project $info_file \n";
-
+        $this->log("** Found project $info_file", '', 2);
       }
       // Generally there is one module per project folder, but occasinoally
       // they are messier. eg metatags_quick has 3 .info files.
@@ -291,14 +299,14 @@ class Index {
    * @param \Symfony\Component\Console\Helper\ProgressBar $progress
    *   Optional Progress ticker.
    */
-  public function runTasks($progress = NULL) {
+  public function runTasks() {
     $max_tasks = $this->options['max-tasks'];
     $scans = $this->listScans();
     $this->log("Starting to run tasks, processing anything incomplete in the queue. Only running $max_tasks tasks at a time, to avoid overload.");
 
     while ($max_tasks && ($task = $this->getNextTask())) {
       $module = $this->findItem($task);
-      $this->log($task, "Running next available task on '$module->name', The batch job instructions are ");
+      $this->log($task, "Running next available task on '$module->name', The batch job instructions are ", 2);
 
       // Figure out which scans on this item have not been done yet.
       $scan_to_run = '';
@@ -326,9 +334,9 @@ class Index {
       }
 
       $max_tasks --;
-      if ($progress) {
+      if ($this->progress) {
         // Console progressbar.
-        $progress->advance();
+        $this->progress->advance();
       }
     }
   }
@@ -342,13 +350,16 @@ class Index {
    * @param $scan
    */
   function runScan(Module $module, $scan) {
+    // Deduce magic function nam, then try to invoke it.
+    // This means that as new scan types get added, they an be run
+    // just by being named correctly..
     $funcname = "run" . ucfirst($scan) . "Scan";
     if (method_exists($this, $funcname)) {
-      $this->log("Running '$scan' scan on $module->name'");
+      $this->log("Running '$scan' scan on '$module->name'", 'progress');
       $this->$funcname($module);
     }
     else {
-      $this->log("No expected function $funcname available yet.");
+      $this->log("No expected function $funcname available yet.", '', 2);
       $module->addStatus("$scan:unavailable");
     }
     $this->entityManager->persist($module);

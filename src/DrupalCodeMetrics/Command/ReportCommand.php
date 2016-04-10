@@ -38,7 +38,7 @@ class ReportCommand extends Command {
         'format',
         NULL,
         InputOption::VALUE_REQUIRED,
-        'Format for return data. values may be [json,cst,tsxt]'
+        'Format for return data. values may be [json,csv,text]'
       )
       ->addOption(
         'locreport',
@@ -53,15 +53,20 @@ class ReportCommand extends Command {
     if ($input->getOption('format')) {
     }
 
-    $output->writeln("Dump the contents of the tables");
+    $output->writeln("Dumping the contents of the tables...");
 
     $options = $this->getApplication()->options;
     $this->index = new Index($options);
 
     // Prepare some more info to display.
     $items = $this->index->getItems();
-    // print_r($items);
-    $this->dumpItems();
+    print_r($items);
+    if ($items) {
+      $this->dumpItems();
+    }
+    else {
+      $output->writeln("Database is currently empty.");
+    }
 
     if ($input->getOption('locreport')) {
       $locReports = $this->index->getLocReports();

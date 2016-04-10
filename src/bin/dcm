@@ -37,7 +37,7 @@ $options['database'] = array(
   'path' => __DIR__ . '/../../db.sqlite',
 );
 
-$application = new DrupalCodeMetrics\Application('DrupalCodeMetrics console', '0.0-alpha');
+$application = new DrupalCodeMetrics\Application();
 $application->options = $options;
 $application->run();
 

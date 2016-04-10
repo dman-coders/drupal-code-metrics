@@ -2,6 +2,12 @@
 /**
  * @file
  *   Adds automatic accessor methods to a class.
+ *
+ * A utility that my lazy modules can call on until I feel like they deserve
+ * getter and setter boilerplate.
+ *
+ * An object that implements this trait should also have its own $options array.
+ * Preferably protected.
  */
 
 namespace DrupalCodeMetrics;
@@ -10,7 +16,6 @@ namespace DrupalCodeMetrics;
  * Adds getVariableX() and SetVariableX() functions everywhere.
  */
 trait AutoGetSetTrait {
-  // private $options;
 
   /**
    * Magic method to catch getters and setters.
@@ -35,7 +40,6 @@ trait AutoGetSetTrait {
     return $this;
   }
 
-
   /**
    * Set options in an assumed $options array.
    *
@@ -45,11 +49,11 @@ trait AutoGetSetTrait {
   public function setOption($opt, $val) {
     $this->options[$opt] = $val;
   }
+
   /**
    * Get options in an assumed $options array.
    *
    * @param string $opt
-   * @param mixed $val
    */
   public function getOption($opt) {
     return $this->options[$opt];

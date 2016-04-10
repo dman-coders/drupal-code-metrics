@@ -8,26 +8,60 @@ and then present analysis of what it found in various ways.
 
 ## Usage
 
-Point it at the root of a Drupal site, or the sites/all/modules path of the site.
+### Overview
 
-  dcm sites/all/modules
+The process involves
+* **Indexing** the available code folders.
+  In this phase, folders and files are enumerated
+  so that we know how many projects there are, and
+  what the versions are etc.
+  This info is built up and retained in a database
+  that we interact with from now on.
+* **Scanning** the indexed files for the various
+  code quality metrics. This can be slow, so it
+  runs as batch tasks, iterating through the items
+  in the index and updating their summaries in the
+  database.
+* **Reporting** the progress of the scanning process
+  and the summaries of the evaluations.
+
+This uses Composer console, so commands are always of the form
+
+    path/to/dcm group:action
+
+eg
+
+    dcm index:list sites/all/modules
+    dcm index:scan
+    dcm report:dump
   
+Will index each module project within the sites/all/modules path of the site.
 It will first index all files and figure out the module folders within that tree
 On second run, it will start running the code sniffer over each module, and calculating ratings for it.
+
+    dcm --help
+
+Displays the current list of commands and arguments.
 
 ## Installation
 
 This is a stand-alone tool that can be placed anywhere in your system and
 then linked to or called directly. The very quickest way to start is:
 
-  composer global require dman-coders/drupal-code-metrics:dev-master
+    composer global require dman-coders/drupal-code-metrics:dev-master
 
 With that done (it will pull in a lot of libraries) you can now run:
 
-  ~/.composer/vendor/bin/dcm
+    ~/.composer/vendor/bin/dcm
 
 I advise adding ~/.composer/vendor/bin/ to your $PATH permanently, as it's
 really really helpful to do that.
+
+If you are not installing globally or modifying your $PATH yet, you will find the command in
+
+    ./src/bin/dcm
+
+
 This source code is now in ~/.composer/vendor/dman-coders/drupal-code-metrics/
 for you to mess with.
 
@@ -37,10 +71,17 @@ Where possible, clean duplicate modules found on a system with the same version 
 The main module+version index is site-wide. 
 This is so the one tool can be run over dozens of unique sites somewhat efficiently.
 
-When identifying modules - if a git checkout is found (such as a dev or submodule checkout) 
-that git origin repository will be used as a unique identifier.
+### Identifying module projects.
+
+If a git checkout is found (such as a dev or submodule checkout)
+that git origin repository will be used as a unique identifier, and the git hash will be its 'version'.
+Most of the time however, a module project (tarball download) is identified by the presence of an info file.
+
+### Metrics
 
 It leverages PHP CodeSniffer to find errors-per-file, and uses that as one metric.
+
+PHPMessDedector is another scan that evaluates complexity.
 
 It should use the Drupal "Hacked!" module also, to evaluate the 
 amount of patches or the stability of some modules.
@@ -48,6 +89,8 @@ amount of patches or the stability of some modules.
 Using various ways of interpreting common Drupal Site installation
 patterns, it should be able to subdivide the found code into "contrib"
 vs "custom" and "patched", and report on that.
+
+## What is good code?
 
 Some precepts this tool uses to create summaries:
 

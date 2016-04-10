@@ -15,7 +15,14 @@ class LOCReport {
   /** @Id @Column(type="integer") @GeneratedValue */
   protected $id;
 
-  /** @Column(type="string") @var string */
+  /**
+   * @Column(type="string") @var string
+   * @ManyToOne(targetEntity="Module")
+   * @JoinTable(name="Module", joinColumns={
+   *   @JoinColumn(name="name", referencedColumnName="name"),
+   *   @JoinColumn(name="version", referencedColumnName="version")
+   * })
+   */
   protected $name;
 
   /** @Column(type="string", nullable=true) @var string */

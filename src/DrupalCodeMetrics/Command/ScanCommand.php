@@ -24,7 +24,7 @@ class ScanCommand extends Command {
   {
     $this
       ->setName('index:scan')
-      ->setDescription('Recurse a folder to enumerate the modules in it.')
+      ->setDescription('Progressively runs all available tests on the queued/indexed items.')
       ->addOption(
         'max-tasks',
         10,
@@ -52,6 +52,9 @@ class ScanCommand extends Command {
     // and the interface to the database.
     $options = $this->getApplication()->options;
     $index = new Index($options);
+    // Tell the index where to log to.
+    // This also allows it access to the verbosity option.
+    $index->setoutput($output);
 
     if ($max_tasks = $input->getOption('max-tasks')) {
       $index->setOption('max-tasks', $max_tasks);
@@ -60,11 +63,13 @@ class ScanCommand extends Command {
 
     // Add a progress bar, why not?
     $progress = new ProgressBar($output, $max_tasks);
+    $index->setProgress($progress);
     $progress->start();
 
-    $index->runTasks($progress);
+    $index->runTasks();
 
     $progress->finish();
+    $output->writeln('');
 
   }
 

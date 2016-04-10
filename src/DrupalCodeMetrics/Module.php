@@ -3,6 +3,8 @@
  * @file
  * Definition of a 'Module' Class.
  *
+ * The data model to describe a Drupal project.
+ *
  * A Module (or Drupal project) entry here contains identity information,
  * as well as the audit results and metrics.
  *
