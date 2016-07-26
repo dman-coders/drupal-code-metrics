@@ -1,14 +1,14 @@
 <?php
 /**
  * @file
- * Storage for phploc reports.
+ * Storage for PHP Code Sniff reports.
  */
 namespace DrupalCodeMetrics;
 
 /**
- * @Entity @Table(name="locReports")
+ * @Entity @Table(name="sniffReports")
  */
-class LOCReport {
+class SniffReport {
   use LoggableTrait;
   use AutoGetSetTrait;
 
@@ -31,80 +31,139 @@ class LOCReport {
   /** @Column(type="datetime", nullable=true) @var DateTime */
   protected $updated;
 
+  /** @Column(type="float", nullable=true) */   protected $errors;
+  /** @Column(type="float", nullable=true) */   protected $warnings;
   /** @Column(type="float", nullable=true) */   protected $files;
-  /** @Column(type="float", nullable=true) */   protected $loc;
-  /** @Column(type="float", nullable=true) */   protected $lloc;
-  /** @Column(type="float", nullable=true) */   protected $llocClasses;
-  /** @Column(type="float", nullable=true) */   protected $llocFunctions;
-  /** @Column(type="float", nullable=true) */   protected $llocGlobal;
-  /** @Column(type="float", nullable=true) */   protected $cloc;
-  /** @Column(type="float", nullable=true) */   protected $ccn;
-  /** @Column(type="float", nullable=true) */   protected $ccnMethods;
-  /** @Column(type="float", nullable=true) */   protected $interfaces;
-  /** @Column(type="float", nullable=true) */   protected $traits;
-  /** @Column(type="float", nullable=true) */   protected $classes;
-  /** @Column(type="float", nullable=true) */   protected $abstractClasses;
-  /** @Column(type="float", nullable=true) */   protected $concreteClasses;
-  /** @Column(type="float", nullable=true) */   protected $functions;
-  /** @Column(type="float", nullable=true) */   protected $namedFunctions;
-  /** @Column(type="float", nullable=true) */   protected $anonymousFunctions;
-  /** @Column(type="float", nullable=true) */   protected $methods;
-  /** @Column(type="float", nullable=true) */   protected $publicMethods;
-  /** @Column(type="float", nullable=true) */   protected $nonPublicMethods;
-  /** @Column(type="float", nullable=true) */   protected $nonStaticMethods;
-  /** @Column(type="float", nullable=true) */   protected $staticMethods;
-  /** @Column(type="float", nullable=true) */   protected $constants;
-  /** @Column(type="float", nullable=true) */   protected $classConstants;
-  /** @Column(type="float", nullable=true) */   protected $globalConstants;
-  /** @Column(type="float", nullable=true) */   protected $testClasses;
-  /** @Column(type="float", nullable=true) */   protected $testMethods;
-  /** @Column(type="float", nullable=true) */   protected $ccnByLloc;
-  /** @Column(type="float", nullable=true) */   protected $llocByNof;
-  /** @Column(type="float", nullable=true) */   protected $methodCalls;
-  /** @Column(type="float", nullable=true) */   protected $staticMethodCalls;
-  /** @Column(type="float", nullable=true) */   protected $instanceMethodCalls;
-  /** @Column(type="float", nullable=true) */   protected $attributeAccesses;
-  /** @Column(type="float", nullable=true) */   protected $staticAttributeAccesses;
-  /** @Column(type="float", nullable=true) */   protected $instanceAttributeAccesses;
-  /** @Column(type="float", nullable=true) */   protected $globalAccesses;
-  /** @Column(type="float", nullable=true) */   protected $globalVariableAccesses;
-  /** @Column(type="float", nullable=true) */   protected $superGlobalVariableAccesses;
-  /** @Column(type="float", nullable=true) */   protected $globalConstantAccesses;
 
   /**
    * @param array $analysis
-   *   All the values from a LOC Analyser.
+   *   All the values from a Sniff Analyser.
    */
   public function setAnalysis($analysis) {
-    #$this->analysis = $analysis;
+    if (empty($analysis)) {
+      return;
+    }
+    if (! is_array($analysis)) {
+      throw new \Exception('Invalid Analysis supplied to ' . __FUNCTION__ . '(). Expected an array.', E_NOTICE);
+    }
     foreach ($analysis as $key => $val) {
       $this->$key = $val;
     }
   }
 
   /**
-   * Runs PHP LinesOfCode analysis
+   * Runs PHP sniff analysis
    *
-   * https://github.com/sebastianbergmann/phploc
    */
-  function getLocAnalysis(Module $module, $extensions) {
-    // Run phploc analyser directly as PHP.
-    $analyser = new \SebastianBergmann\PHPLOC\Analyser();
-    // It's my job to set the parameters right, and take care to only give it
-    // PHP files (it borks on binaries, understandably).
-    $tree = $module->getCodeFiles($extensions);
+  function getSniffAnalysis(Module $module, $extensions) {
+
+    print_r(get_defined_vars());
+    $verbosity = 1;
+    // Run php analyser directly as PHP.
+    $phpcs = new \PHP_CodeSniffer($verbosity);
+
+    // Need to emulate a CLI environment in order to pass certain settings down
+    // to the internals.
+    // Decoupling here is atrocious.
+    $cli = new SniffReporter();
+    $phpcs->setCli($cli);
+
+    // Parameters passed to phpcs.
+    // Normally we just name the standard,
+    // but passing the full path to it also works.
+    $values = array(
+      'standard' => 'vendor/drupal/coder/coder_sniffer/Drupal',
+      'sniffs' => array(),
+    );
+    $phpcs->initStandard($values['standard'], $values['sniffs']);
+
     $analysis = NULL;
     try {
-      $analysis = $analyser->countFiles($tree, TRUE);
+      // PHPCS handles recursion on its own.
+      # $analysis = $phpcs->processFiles($module->getLocation());
+      // But we have already enumerated the files, so lets keep consistent.
+      $tree = $module->getCodeFiles($extensions);
+      # $analysis = $phpcs->processFiles($tree);
+      // processFiles is too abstract, it doesn't return the individual results.
+      // Do the iteration ourselves.
+      foreach ($tree as $filepath) {
+        $analysis = $phpcs->processFile($filepath);
+      }
     }
     catch (Exception $e) {
       $message = "When processing " . $module->getLocation() . " " . $e->getMessage();
       error_log($message);
     }
 
+
+    // Params for reporting.
+    $report = 'full';
+    $showSources = FALSE;
+    $cliValues = array(
+      'colors' => FALSE,
+    );
+    $reportFile = 'report.out';
+    $result = $phpcs->reporting->printReport($report, $showSources, $cliValues, $reportFile);
+
+    print_r($result);
     return $analysis;
   }
 
 
+
+}
+
+
+/**
+ * Class SniffReporter
+ * @package DrupalCodeMetrics
+ *
+ * We can't influence CodeSniffer settings directly, as it takes its preferences
+ * from CLI settings.
+ * This object stubs the CLI so we can set settings.
+ */
+class SniffReporter extends \PHP_CodeSniffer_CLI {
+
+
+  /**
+   * Get a list of default values for all possible command line arguments.
+   *
+   * @return array
+   */
+  public function getDefaults() {
+    $defaults = parent::getDefaults();
+    $defaults['standard'] = array('Drupal');
+    // The Sniffer tries really hard to discard its logs
+    // ALL the time unless we tell it not to.
+    // All these settings are just to prevent that amnesia.
+    $defaults['showSources'] = TRUE;
+    $defaults['verbosity'] = 1;
+    $defaults['reports'] = array('full' => NULL);
+    $defaults['warningSeverity'] = PHPCS_DEFAULT_WARN_SEV;
+    // If the severities are left as the default (zero) then
+    // NOTHING is considered worth logging or even counting!
+    $this->warningSeverity = PHPCS_DEFAULT_WARN_SEV;
+    $this->errorSeverity = PHPCS_DEFAULT_ERROR_SEV;
+
+    return $defaults;
+
+  }//end getDefaults()
+
+  /**
+   * Gets the emulated command line values.
+   *
+   * This is a stub, Always return our defaults.
+   *
+   * @return array
+   */
+  public function getCommandLineValues() {
+    if (empty($this->values) === FALSE) {
+      return $this->values;
+    }
+
+    $this->values = $this->getDefaults();
+
+    return $this->values;
+  }
 
 }

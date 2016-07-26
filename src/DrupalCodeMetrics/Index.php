@@ -138,6 +138,17 @@ class Index {
   }
 
   /**
+   * Reset the status of all items.
+   *
+   */
+  public function resetAllStatus() {
+    $qb = $this->entityManager->createQueryBuilder();
+    $qb->update('DrupalCodeMetrics\Module', 'm')
+        ->set('m.status', "''");
+    return $qb->getQuery()->execute();
+  }
+
+  /**
    * Find a queued task that needs processing.
    *
    * Find the next job that is neither 'failed' nor 'complete'
@@ -463,6 +474,48 @@ class Index {
     return $this;
   }
 
+  /**
+   * Run PHP Code Sniffer over the given module.
+   *
+   * @param Module $module
+   * @return $this
+   */
+  public function runSniffScan(Module $module) {
+    // Look for an existing one before adding or updating.
+    $conditions = array('name' => $module->getName(), 'version' => $module->getVersion());
+    $identifier = implode('-', $conditions);
+    $found = $this->entityManager
+        ->getRepository('DrupalCodeMetrics\\SniffReport')
+        ->findOneBy($conditions);
+
+    if ($found) {
+      $report = $found;
+      $this->log("Updating existing Sniff report for $identifier");
+    }
+    else {
+      $report = new SniffReport();
+      $this->log("Creating new Shiff report for $identifier");
+    }
+
+
+    $report->setName($module->getName());
+    $report->setVersion($module->getVersion());
+    $now = new \DateTime();
+    $report->setUpdated($now);
+    $analysis = $report->getSniffAnalysis($module, $this->options['extensions']);
+    $report->setAnalysis($analysis);
+    $this->entityManager->persist($report);
+    $this->entityManager->flush();
+
+    if (!$analysis) {
+      $this->log("SniffReport on " . $module->getName() . " failed. Not updating it.");
+      $module->addStatus('sniff:failed');
+    }
+    else {
+      $module->addStatus('sniff:processed');
+    }
+    return $this;
+  }
 
   /**
    * Retrieve all items in the index so far.
