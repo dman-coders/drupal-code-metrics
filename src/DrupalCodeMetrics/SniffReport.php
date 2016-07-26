@@ -12,28 +12,34 @@ class SniffReport {
   use LoggableTrait;
   use AutoGetSetTrait;
 
-  /** @Id @Column(type="integer") @GeneratedValue */
+  /**
+   * @Id @Column(type="integer") @GeneratedValue */
   protected $id;
 
   /**
    * @Column(type="string") @var string
    * @ManyToOne(targetEntity="Module")
    * @JoinTable(name="Module", joinColumns={
-   *   @JoinColumn(name="name", referencedColumnName="name"),
-   *   @JoinColumn(name="version", referencedColumnName="version")
+   * @JoinColumn(name="name", referencedColumnName="name"),
+   * @JoinColumn(name="version", referencedColumnName="version")
    * })
    */
   protected $name;
 
-  /** @Column(type="string", nullable=true) @var string */
+  /**
+   * @Column(type="string", nullable=true) @var string */
   protected $version;
 
-  /** @Column(type="datetime", nullable=true) @var DateTime */
+  /**
+   * @Column(type="datetime", nullable=true) @var DateTime */
   protected $updated;
 
-  /** @Column(type="float", nullable=true) */   protected $errors;
-  /** @Column(type="float", nullable=true) */   protected $warnings;
-  /** @Column(type="float", nullable=true) */   protected $files;
+  /**
+   * @Column(type="float", nullable=true) */   protected $errors;
+  /**
+   * @Column(type="float", nullable=true) */   protected $warnings;
+  /**
+   * @Column(type="float", nullable=true) */   protected $files;
 
   /**
    * @param array $analysis
@@ -43,7 +49,7 @@ class SniffReport {
     if (empty($analysis)) {
       return;
     }
-    if (! is_array($analysis)) {
+    if (!is_array($analysis)) {
       throw new \Exception('Invalid Analysis supplied to ' . __FUNCTION__ . '(). Expected an array.', E_NOTICE);
     }
     foreach ($analysis as $key => $val) {
@@ -52,8 +58,7 @@ class SniffReport {
   }
 
   /**
-   * Runs PHP sniff analysis
-   *
+   * Runs PHP sniff analysis.
    */
   function getSniffAnalysis(Module $module, $extensions) {
 
@@ -80,10 +85,10 @@ class SniffReport {
     $analysis = NULL;
     try {
       // PHPCS handles recursion on its own.
-      # $analysis = $phpcs->processFiles($module->getLocation());
+      // $analysis = $phpcs->processFiles($module->getLocation());
       // But we have already enumerated the files, so lets keep consistent.
       $tree = $module->getCodeFiles($extensions);
-      # $analysis = $phpcs->processFiles($tree);
+      // $analysis = $phpcs->processFiles($tree);
       // processFiles is too abstract, it doesn't return the individual results.
       // Do the iteration ourselves.
       foreach ($tree as $filepath) {
@@ -94,7 +99,6 @@ class SniffReport {
       $message = "When processing " . $module->getLocation() . " " . $e->getMessage();
       error_log($message);
     }
-
 
     // Params for reporting.
     $report = 'full';
@@ -109,13 +113,12 @@ class SniffReport {
     return $analysis;
   }
 
-
-
 }
 
 
 /**
- * Class SniffReporter
+ * Class SniffReporter.
+ *
  * @package DrupalCodeMetrics
  *
  * We can't influence CodeSniffer settings directly, as it takes its preferences
@@ -123,7 +126,6 @@ class SniffReport {
  * This object stubs the CLI so we can set settings.
  */
 class SniffReporter extends \PHP_CodeSniffer_CLI {
-
 
   /**
    * Get a list of default values for all possible command line arguments.

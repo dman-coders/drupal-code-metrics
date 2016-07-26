@@ -1,27 +1,25 @@
 <?php
-/**
- * @file
- * Commandline processing. Interface to the Index to trigger tasks and reports.
- *
- * My first attempt at a Symfony Console.
- * http://symfony.com/doc/current/components/console/introduction.html
- */
 
 namespace DrupalCodeMetrics\Command;
 
 use DrupalCodeMetrics\Index;
 
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
 
+/**
+ *
+ */
 class IndexScanCommand extends Command {
 
-  protected function configure()
-  {
+  /**
+   *
+   */
+  protected function configure() {
+
     $this
       ->setName('index:scan')
       ->setDescription('Progressively runs all available tests on the queued/indexed items.')
@@ -33,21 +31,23 @@ class IndexScanCommand extends Command {
       )
       ->addOption(
         'reset',
-        null,
+        NULL,
         InputOption::VALUE_NONE,
         'Drops the database index completely before running.'
       )
       ->addOption(
         'flush',
-        null,
+        NULL,
         InputOption::VALUE_NONE,
         'Will overwrite and re-index any module previously found.'
-      )
-    ;
+      );
   }
 
-  protected function execute(InputInterface $input, OutputInterface $output)
-  {
+  /**
+   *
+   */
+  protected function execute(InputInterface $input, OutputInterface $output) {
+
     // Initialize the index, which is both the worker
     // and the interface to the database.
     $options = $this->getApplication()->options;

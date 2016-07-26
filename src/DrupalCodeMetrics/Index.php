@@ -1,25 +1,4 @@
 <?php
-/**
- * @file
- * Definition of an 'Index' Class.
- *
- * This object represents the indexer - the engine that enumerates items
- * And stores summaries in the DB.
- *
- * (Unrelated to website index.php filename convention.)
- *
- * This application runs in several phases.
- *
- * The first phase loops through the given folder structure and enumerates
- * the modules found there. It just notes them into the Modules table,
- * and does not process them immerdiately.
- *
- * The next phase then goes back to the Modules table and pops off any 'pending'
- * entries one by one, and performs the staic code analysis on it.
- *
- * This is so this process can be robustly stopped, started, restarted
- * or backgrounded without having to re-index from the top each time.
- */
 
 namespace DrupalCodeMetrics;
 use Doctrine\ORM\Tools\Setup;
@@ -48,6 +27,7 @@ class Index {
    * Date of the last run.
    *
    * @Column(type="datetime", nullable=true)
+   *
    * @var DateTime
    */
   protected $updated;
@@ -71,11 +51,11 @@ class Index {
         'path' => 'db.sqlite',
       ),
       'is-dev-mode' => TRUE,
-      // set --index to list projects
+      // Set --index to list projects.
       'index' => FALSE,
-      // set --tasks to process any outstanding tasks.
+      // Set --tasks to process any outstanding tasks.
       'tasks' => FALSE,
-      // set --dump to list the results when done.
+      // Set --dump to list the results when done.
       'dump' => FALSE,
     );
   }
@@ -139,7 +119,6 @@ class Index {
 
   /**
    * Reset the status of all items.
-   *
    */
   public function resetAllStatus() {
     $qb = $this->entityManager->createQueryBuilder();
@@ -162,9 +141,8 @@ class Index {
       ->orderBy('R.updated', 'ASC')
       ->setMaxResults(1);
 
-#    $qb->setParameter('failed', 'failed');
-#    $qb->setParameter('complete', 'complete');
-
+    // $qb->setParameter('failed', 'failed');
+    // $qb->setParameter('complete', 'complete');.
     return $qb->getQuery()->getOneOrNullResult();
   }
 
@@ -226,6 +204,9 @@ class Index {
     }
   }
 
+  /**
+   *
+   */
   private function findInfoFile($dir) {
     $mask = '/\.info$/';
     if (!($handle = opendir($dir))) {
@@ -234,7 +215,7 @@ class Index {
     // Info file is almost always named after the folder.
     // If not, scan and will have to take the first in fo we find.
     $info_file = $dir . '/' . basename($dir) . '.info';
-    if (! file_exists($info_file)) {
+    if (!file_exists($info_file)) {
       while (FALSE !== ($filename = readdir($handle))) {
         if (preg_match($mask, $filename, $matches)) {
           return $info_file;
@@ -288,7 +269,6 @@ class Index {
     $this->entityManager->flush();
   }
 
-
   /**
    * Retrieve queued tasks - Modules in a 'pending' state - and scan them.
    *
@@ -330,7 +310,7 @@ class Index {
         }
         else {
           // $scan scan was run already.
-          // $this->log("'$module->name' status has already run '$scan' scan");
+          // $this->log("'$module->name' status has already run '$scan' scan");.
         }
       }
       if (!empty($scan_to_run)) {
@@ -344,7 +324,7 @@ class Index {
         $this->entityManager->flush();
       }
 
-      $max_tasks --;
+      $max_tasks--;
       if ($this->progress) {
         // Console progressbar.
         $this->progress->advance();
@@ -424,7 +404,7 @@ class Index {
    * @return Module
    */
   public function runContentScan(Module $module) {
-    if (! is_dir($module->getLocation())) {
+    if (!is_dir($module->getLocation())) {
       error_log('Module Directory has gome missing.');
       $module->addStatus('content:failed-missing');
     }
@@ -438,6 +418,9 @@ class Index {
     return $module;
   }
 
+  /**
+   *
+   */
   public function runLocScan(Module $module) {
     // Look for an existing one before adding or updating.
     $conditions = array('name' => $module->getName(), 'version' => $module->getVersion());
@@ -478,6 +461,7 @@ class Index {
    * Run PHP Code Sniffer over the given module.
    *
    * @param Module $module
+   *
    * @return $this
    */
   public function runSniffScan(Module $module) {
@@ -496,7 +480,6 @@ class Index {
       $report = new SniffReport();
       $this->log("Creating new Sniff report for $identifier");
     }
-
 
     $report->setName($module->getName());
     $report->setVersion($module->getVersion());
@@ -526,7 +509,6 @@ class Index {
     return $items;
   }
 
-
   /**
    * Drop the current database and start again.
    */
@@ -537,6 +519,5 @@ class Index {
     // vendor/bin/doctrine orm:schema-tool:create
     // $this->entityManager->create();
   }
-
 
 }

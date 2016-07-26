@@ -1,32 +1,18 @@
 <?php
-/**
- * @file
- * Console application - for interacting with the index.
- *
- * Set up so that we can do some common configs (like the database connection)
- * without repeating them in each command.
- *
- * This application is intended to be invoked by the trigger script in 'bin'.
- *
- * It should provides access to the default command,
- * but still lets you call the other ones too.
- *
- * http://symfony.com/doc/current/components/console/single_command_tool.html
- *
- * But the instructions there don't say how to do both at once, like
- * run a default command AND invoke others by name.
- * So we are stuck with the command namespace syntax.
- */
 
 namespace DrupalCodeMetrics;
 
+use Command\IndexFlushCommand;
+use Command\IndexScanCommand;
+use Command\IndexListCommand;
+use Command\ReportDumpCommand;
 use Symfony\Component\Console\Application as AbstractApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * TextUI frontend
+ * TextUI frontend.
  */
 class Application extends AbstractApplication {
 
@@ -42,6 +28,9 @@ class Application extends AbstractApplication {
 
   public $options;
 
+  /**
+   *
+   */
   public function __construct() {
     parent::__construct($this::NAME, sprintf('%s', $this::VERSION));
 
@@ -49,7 +38,7 @@ class Application extends AbstractApplication {
     $this->getDefinition()->addOption(
       new InputOption(
         '--no-debug',
-        null,
+        NULL,
         InputOption::VALUE_NONE,
         'Switches off debug mode.'
       )
@@ -60,7 +49,7 @@ class Application extends AbstractApplication {
     However I don't instantiate the entityManager itself.
     I am the application, I know where the db is.
     The commands and the Index do the actual talking to it.
-    */
+     */
 
     // Database configuration parameters.
     // HOW TO DO THIS BETTER?
@@ -79,25 +68,28 @@ class Application extends AbstractApplication {
    */
   protected function getDefaultCommands() {
     // Keep the core default commands to have the HelpCommand
-    // which is used when using the --help option
+    // which is used when using the --help option.
     $defaultCommands = parent::getDefaultCommands();
     // Load the available command definitions.
-    $defaultCommands[] = new Command\ReportDumpCommand();
-    $defaultCommands[] = new Command\IndexListCommand();
-    $defaultCommands[] = new Command\IndexScanCommand();
-    $defaultCommands[] = new Command\IndexFlushCommand();
+    $defaultCommands[] = new ReportDumpCommand();
+    $defaultCommands[] = new IndexListCommand();
+    $defaultCommands[] = new IndexScanCommand();
+    $defaultCommands[] = new IndexFlushCommand();
     return $defaultCommands;
   }
 
   /**
    * Runs the current application.
    *
-   * @param InputInterface $input An Input instance
-   * @param OutputInterface $output An Output instance
+   * @param InputInterface $input
+   *   An Input instance
+   * @param OutputInterface $output
+   *   An Output instance
    *
    * @return integer 0 if everything went fine, or an error code
    */
   public function doRun(InputInterface $input, OutputInterface $output) {
     parent::doRun($input, $output);
   }
+
 }

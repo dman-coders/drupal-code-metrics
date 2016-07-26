@@ -1,25 +1,17 @@
 <?php
-/**
- * @file
- * Commandline processing. Interface to the Index to trigger tasks and reports.
- *
- * My first attempt at a Symfony Console.
- * http://symfony.com/doc/current/components/console/introduction.html
- *
- * This file is pulled in as needed by the Application.
- */
 
 namespace DrupalCodeMetrics\Command;
 
 use DrupalCodeMetrics\Index;
 
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-
+/**
+ *
+ */
 class ReportDumpCommand extends Command {
 
   /**
@@ -29,6 +21,9 @@ class ReportDumpCommand extends Command {
 
   private $index;
 
+  /**
+   *
+   */
   protected function configure() {
     $this
       ->setName('report:dump')
@@ -48,6 +43,9 @@ class ReportDumpCommand extends Command {
       );
   }
 
+  /**
+   *
+   */
   protected function execute(InputInterface $input, OutputInterface $output) {
     $this->output = $output;
     if ($input->getOption('format')) {

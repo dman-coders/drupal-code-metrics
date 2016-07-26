@@ -1,10 +1,4 @@
 <?php
-/**
- * @file
- *   Adds the log() method to a class.
- *
- * My first experiment with traits. This project is a learning experience...
- */
 
 namespace DrupalCodeMetrics;
 
@@ -14,7 +8,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Loggable trait.
  *
  * When instantiating a thing with a loggable trait, you can optionally pass it
- * a Symfony\Component\Console\Output\OutputInterface handle, eg by setting
+ * a Symfony\Component\Console\Output\OutputInterface handle, eg by setting.
  *
  * '''' $o->setOutput($output);
  *
@@ -27,8 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * implementors, so passing in an $output or $progress handle is totally
  * optional.
  */
-trait LoggableTrait
-{
+trait LoggableTrait {
   /**
    * @var OutputInterface
    */
@@ -55,7 +48,7 @@ trait LoggableTrait
   private function log($message, $label = '', $level = 1) {
     // Symfony has built-in support for -v, -vv, -vvv verbosity flags.
     // http://blog.calevans.com/2013/07/10/managing-the-verbosity-of-symfonys-command-object-with-a-trait/
-    // 0 is quiet,
+    // 0 is quiet,.
     if ($this->output) {
       $verbosity = $this->output->getVerbosity();
     }
@@ -70,7 +63,7 @@ trait LoggableTrait
     $out = $label ? $label . " : " : "";
     $out .= is_string($message) ? $message : var_export($message, 1);
 
-    if ($verbosity > OutputInterface::VERBOSITY_VERBOSE ) {
+    if ($verbosity > OutputInterface::VERBOSITY_VERBOSE) {
       // Where this message is coming from is handy to know when debugging.
       $stack = debug_backtrace();
       $caller = $stack[0];
@@ -100,4 +93,5 @@ trait LoggableTrait
       }
     }
   }
+
 }

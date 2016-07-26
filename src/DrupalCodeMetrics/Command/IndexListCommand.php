@@ -1,11 +1,4 @@
 <?php
-/**
- * @file
- * Commandline processing. Interface to the Index to trigger tasks and reports.
- *
- * My first attempt at a Symfony Console.
- * http://symfony.com/doc/current/components/console/introduction.html
- */
 
 namespace DrupalCodeMetrics\Command;
 
@@ -17,10 +10,16 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ *
+ */
 class IndexListCommand extends Command {
 
-  protected function configure()
-  {
+  /**
+   *
+   */
+  protected function configure() {
+
     $this
       ->setName('index:list')
       ->setDescription('Recurse a folder to enumerate the modules in it. This just counts and queues the found module projects.')
@@ -31,27 +30,29 @@ class IndexListCommand extends Command {
       )
       ->addOption(
         'process',
-        null,
+        NULL,
         InputOption::VALUE_NONE,
         'Also start the process of running the scans on it. This takes longer than just listing them.'
       )
       ->addOption(
         'reset',
-        null,
+        NULL,
         InputOption::VALUE_NONE,
         'Drops the database index completely before running.'
       )
       ->addOption(
         'flush',
-        null,
+        NULL,
         InputOption::VALUE_NONE,
         'Will overwrite and re-index any module previously found.'
-      )
-    ;
+      );
   }
 
-  protected function execute(InputInterface $input, OutputInterface $output)
-  {
+  /**
+   *
+   */
+  protected function execute(InputInterface $input, OutputInterface $output) {
+
     $paths = $input->getArgument('path');
 
     if ($input->getOption('process')) {

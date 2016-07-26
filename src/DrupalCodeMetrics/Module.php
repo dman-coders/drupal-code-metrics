@@ -1,25 +1,6 @@
 <?php
-/**
- * @file
- * Definition of a 'Module' Class.
- *
- * The data model to describe a Drupal project.
- *
- * A Module (or Drupal project) entry here contains identity information,
- * as well as the audit results and metrics.
- *
- * These metrics include line count, complexity, and summaries of code
- * analysis.
- *
- * For the benefit of Doctrine Entity DB Schema auto-configuration.
- * Describing my vars here will create a corresponding Database table.
- *
- * Following the guide at
- * http://doctrine-orm.readthedocs.org/en/latest/tutorials/getting-started.html
- */
 
 namespace DrupalCodeMetrics;
-use Symfony\Component\Config\Definition\Exception\Exception;
 
 /**
  * A Module, defined by its name, location and version.
@@ -45,6 +26,7 @@ class Module {
    * Machine name.
    *
    * @Column(type="string")
+   *
    * @var string
    */
   public $name;
@@ -53,6 +35,7 @@ class Module {
    * Human name.
    *
    * @Column(type="string", nullable=true)
+   *
    * @var string
    */
   public $label;
@@ -111,6 +94,9 @@ class Module {
    */
   protected $modified;
 
+  /**
+   *
+   */
   public function getFilecount($flush = FALSE) {
     if (isset($this->filecount) && !$flush) {
       return $this->filecount;
@@ -120,6 +106,9 @@ class Module {
     return $this->filecount;
   }
 
+  /**
+   *
+   */
   public function getCodeFilecount($extensions) {
     $codefiles = $this->getCodeFiles($extensions);
     $this->codefilecount = count($codefiles);
@@ -136,7 +125,7 @@ class Module {
    *   list of files. Keyed by local filename,
    */
   public function getCodeFiles($extensions) {
-    if (! is_array($extensions)) {
+    if (!is_array($extensions)) {
       $extensions = explode(',', $extensions);
     }
     $tree = $this->getDirectoryTree();
@@ -164,7 +153,7 @@ class Module {
    *   Values are the absolute filepath.
    */
   public function getDirectoryTree($location = NULL, $prefix = '') {
-    if (! $location) {
+    if (!$location) {
       $location = $this->location;
     }
     $files = array();
@@ -173,7 +162,7 @@ class Module {
       if ($file->isDot()) {
         continue;
       }
-      if ($file->isDir() === true) {
+      if ($file->isDir() === TRUE) {
         $foldername = $file->getFilename();
         $files += $this->getDirectoryTree($file->getPathname(), $foldername . DIRECTORY_SEPARATOR);
       }
@@ -195,15 +184,18 @@ class Module {
    */
   public function addStatus($status) {
     $statuslist = $this->getStatuslist();
-    list($process,$stat) = explode(':', $status);
+    list($process, $stat) = explode(':', $status);
     $statuslist[$process][$stat] = TRUE;
     $this->setStatuslist($statuslist);
     return $this;
   }
 
+  /**
+   *
+   */
   public function removeStatus($status) {
     $statuslist = $this->getStatuslist();
-    list($process,$stat) = explode(':', $status);
+    list($process, $stat) = explode(':', $status);
     unset($statuslist[$process][$stat]);
     $this->setStatuslist($statuslist);
     return $this;
@@ -266,6 +258,5 @@ class Module {
     $this->modified = TRUE;
     return $statuslist;
   }
-
 
 }

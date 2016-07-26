@@ -1,14 +1,4 @@
 <?php
-/**
- * @file
- *   Adds automatic accessor methods to a class.
- *
- * A utility that my lazy modules can call on until I feel like they deserve
- * getter and setter boilerplate.
- *
- * An object that implements this trait should also have its own $options array.
- * Preferably protected.
- */
 
 namespace DrupalCodeMetrics;
 
