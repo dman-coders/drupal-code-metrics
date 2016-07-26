@@ -2,10 +2,6 @@
 
 namespace DrupalCodeMetrics;
 
-use DrupalCodeMetrics\Command\IndexFlushCommand;
-use DrupalCodeMetrics\Command\IndexScanCommand;
-use DrupalCodeMetrics\Command\IndexListCommand;
-use DrupalCodeMetrics\Command\ReportDumpCommand;
 use Symfony\Component\Console\Application as AbstractApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -74,10 +70,11 @@ class Application extends AbstractApplication {
     // which is used when using the --help option.
     $defaultCommands = parent::getDefaultCommands();
     // Load the available command definitions.
-    $defaultCommands[] = new ReportDumpCommand();
-    $defaultCommands[] = new IndexListCommand();
-    $defaultCommands[] = new IndexScanCommand();
-    $defaultCommands[] = new IndexFlushCommand();
+    $defaultCommands[] = new \DrupalCodeMetrics\Command\InitializeCommand();
+    $defaultCommands[] = new \DrupalCodeMetrics\Command\ReportDumpCommand();
+    $defaultCommands[] = new \DrupalCodeMetrics\Command\IndexListCommand();
+    $defaultCommands[] = new \DrupalCodeMetrics\Command\IndexScanCommand();
+    $defaultCommands[] = new \DrupalCodeMetrics\Command\IndexFlushCommand();
     return $defaultCommands;
   }
 
@@ -92,7 +89,18 @@ class Application extends AbstractApplication {
    * @return integer 0 if everything went fine, or an error code
    */
   public function doRun(InputInterface $input, OutputInterface $output) {
-    parent::doRun($input, $output);
+    // Wrap this in a warning to catch database connection errors
+    // And provide setup instructions.
+    try {
+      parent::doRun($input, $output);
+    } catch (\Doctrine\DBAL\Exception $e) {
+      $output->writeln('<error>Problem communication with the expected database. Reset your database with `dcm init`</error>');
+      $output->writeln('See <info>help init</info> for details.');
+    } catch (\Doctrine\DBAL\Exception\DatabaseObjectNotFoundException $e) {
+      $output->writeln('<error>Unable to find expected object in database. Before using this tool, you should create your database with `dcm init`</error>');
+      $output->writeln('See <info>help init</info> for details.');
+    }
+
   }
 
 }

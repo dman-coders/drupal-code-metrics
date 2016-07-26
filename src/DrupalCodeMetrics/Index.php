@@ -79,6 +79,11 @@ class Index {
 
     // Obtaining the entity manager.
     $this->entityManager = EntityManager::create($this->options['database'], $config);
+
+    # We don't *test* the database connection,
+    # so it may not even be created or available yet..
+    # But the Application anticipates and catches DB problems for us,
+    # and provides setup info, so hopefully that will do.
   }
 
   /**
@@ -525,11 +530,12 @@ class Index {
    * Drop the current database and start again.
    */
   public function rebuild() {
-    // TODO.
-    // for now
-    // vendor/bin/doctrine orm:schema-tool:drop --force
-    // vendor/bin/doctrine orm:schema-tool:create
-    // $this->entityManager->create();
+    $schemaTool = new \Doctrine\ORM\Tools\SchemaTool($this->entityManager);
+    $metadatas = $this->entityManager->getMetadataFactory()->getAllMetadata();
+    $schemaTool->dropDatabase();
+    $this->log('Creating database schema...');
+    $schemaTool->createSchema($metadatas);
+    $this->log('Database schema created successfully!');
   }
 
 }

@@ -3,30 +3,24 @@
 namespace DrupalCodeMetrics\Command;
 
 use DrupalCodeMetrics\Index;
-
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Resets the qued task status of all items, to allow re-queuing.
+ * Initializes the database. Empties it if it exists.
  */
-class IndexFlushCommand extends Command {
+class InitializeCommand extends Command {
 
   /**
    * @inheritdoc
    */
   protected function configure() {
     $this
-      ->setName('index:flush')
-      ->setDescription('Clears the current reports of the indexed items. Resets their tasks to re-queue them for processing.')
-      ->addOption(
-        'drop',
-        NULL,
-        InputOption::VALUE_NONE,
-        'Drop the database completely and reset from scratch'
-      )
+      ->setName('init')
+      ->setDescription('Initializes the database index. Empties and rebuilds it if it exists.')
+      ->setHelp('This utility uses a local database to keep track of what has and has nott been indexed. By default this will be a sqlite db in the installation directory. If you prefer, you can use othe database layers by editing the Database configuration parameters in bootstrap.php.')
     ;
   }
 
@@ -43,14 +37,7 @@ class IndexFlushCommand extends Command {
     // This also allows it access to the verbosity option.
     $index->setOutput($output);
 
-    if ($input->getOption('drop')) {
-      $index->rebuild();
-      $output->writeln('Emptied database.');
-    }
-    else {
-      $index->resetAllStatus();
-      $output->writeln('Reset the status of all items.');
-    }
+    $index->rebuild();
   }
 
 }

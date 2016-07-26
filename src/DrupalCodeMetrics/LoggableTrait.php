@@ -20,12 +20,26 @@ use Symfony\Component\Console\Output\OutputInterface;
  * I want to re-use the trait freely without imposing requirements on the
  * implementors, so passing in an $output or $progress handle is totally
  * optional.
+ *
+ * Objects that use this trait will be able to Use either
+ * $this->log('message')
+ * or
+ * $this->output->writeln('message')
+ * as they please.
+ *
  */
 trait LoggableTrait {
   /**
    * @var OutputInterface
    */
   protected $output;
+
+ /**
+   * @param \Symfony\Component\Console\Output\OutputInterface $output
+   */
+  public function setOutput($output) {
+    $this->output = $output;
+  }
 
   /**
    * Logs a message to the current output stream.

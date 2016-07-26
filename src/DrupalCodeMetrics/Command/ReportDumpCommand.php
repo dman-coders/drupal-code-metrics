@@ -60,7 +60,7 @@ class ReportDumpCommand extends Command {
 
     // Prepare some more info to display.
     $items = $this->index->getItems();
-    print_r($items);
+    #print_r($items);
     if ($items) {
       $this->dumpItems();
     }
