@@ -20,7 +20,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 
-class ReportCommand extends Command {
+class ReportDumpCommand extends Command {
 
   /**
    * @var OutputInterface

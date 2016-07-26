@@ -82,9 +82,10 @@ class Application extends AbstractApplication {
     // which is used when using the --help option
     $defaultCommands = parent::getDefaultCommands();
     // Load the available command definitions.
-    $defaultCommands[] = new Command\ReportCommand();
-    $defaultCommands[] = new Command\IndexCommand();
-    $defaultCommands[] = new Command\ScanCommand();
+    $defaultCommands[] = new Command\ReportDumpCommand();
+    $defaultCommands[] = new Command\IndexListCommand();
+    $defaultCommands[] = new Command\IndexScanCommand();
+    $defaultCommands[] = new Command\IndexFlushCommand();
     return $defaultCommands;
   }
 

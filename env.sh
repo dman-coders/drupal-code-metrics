@@ -5,3 +5,5 @@
 # Make the local bin paths available and take priority.
 PATH=src/bin:vendor/bin:$PATH
 
+export XDEBUG_CONFIG=idekey=PHPSTORM
+
