@@ -1,7 +1,8 @@
 <?php
-use SebastianBergmann\PHPLOC\Analyser;
 
 namespace DrupalCodeMetrics;
+
+use SebastianBergmann\PHPLOC\Analyser;
 
 /**
  * @Entity @Table(name="locReports")
@@ -126,6 +127,10 @@ class LOCReport {
    * Runs PHP LinesOfCode analysis.
    *
    * Https://github.com/sebastianbergmann/phploc.
+   *
+   * @param \DrupalCodeMetrics\Module $module
+   * @param $extensions
+   * @return array|null
    */
   function getLocAnalysis(Module $module, $extensions) {
     // Run phploc analyser directly as PHP.

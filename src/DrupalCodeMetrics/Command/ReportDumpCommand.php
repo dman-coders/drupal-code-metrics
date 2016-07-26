@@ -18,11 +18,13 @@ class ReportDumpCommand extends Command {
    * @var OutputInterface
    */
   private $output;
-
+  /**
+   * @var InputInterface
+   */
   private $index;
 
   /**
-   *
+   * @inheritdoc
    */
   protected function configure() {
     $this
@@ -44,7 +46,7 @@ class ReportDumpCommand extends Command {
   }
 
   /**
-   *
+   * @inheritdoc
    */
   protected function execute(InputInterface $input, OutputInterface $output) {
     $this->output = $output;

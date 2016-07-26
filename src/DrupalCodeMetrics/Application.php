@@ -2,10 +2,10 @@
 
 namespace DrupalCodeMetrics;
 
-use Command\IndexFlushCommand;
-use Command\IndexScanCommand;
-use Command\IndexListCommand;
-use Command\ReportDumpCommand;
+use DrupalCodeMetrics\Command\IndexFlushCommand;
+use DrupalCodeMetrics\Command\IndexScanCommand;
+use DrupalCodeMetrics\Command\IndexListCommand;
+use DrupalCodeMetrics\Command\ReportDumpCommand;
 use Symfony\Component\Console\Application as AbstractApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -26,6 +26,9 @@ class Application extends AbstractApplication {
    */
   const VERSION = '0.0.0';
 
+  /**
+   * @var []
+   */
   public $options;
 
   /**

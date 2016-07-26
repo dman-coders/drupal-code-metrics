@@ -310,7 +310,7 @@ class Index {
         }
         else {
           // $scan scan was run already.
-          // $this->log("'$module->name' status has already run '$scan' scan");.
+          $this->log("'$module->name' status has already run '$scan' scan", 'continue', 3);
         }
       }
       if (!empty($scan_to_run)) {
@@ -338,23 +338,35 @@ class Index {
    * Will always update the module with a status change.
    *
    * @param Module $module
-   * @param $scan
+   * @param string $scan
+   *
+   * @return Index
+   *   $this
    */
   function runScan(Module $module, $scan) {
-    // Deduce magic function nam, then try to invoke it.
-    // This means that as new scan types get added, they an be run
+    if (!$module->exists()) {
+      $this->log("Module is no longer available at " . $module->getLocation() , '', 2);
+      $module->addStatus("$scan:unavailable");
+      $this->entityManager->persist($module);
+      $this->entityManager->flush();
+      return $this;
+    }
+
+    // Deduce magic function name, then try to invoke it.
+    // This means that as new scan types get added, they can be run
     // just by being named correctly..
     $funcname = "run" . ucfirst($scan) . "Scan";
     if (method_exists($this, $funcname)) {
-      $this->log("Running '$scan' scan on '$module->name'", 'progress');
+      $this->log("Running '$scan' scan on '$module->name'", 'progress', 1);
       $this->$funcname($module);
     }
     else {
-      $this->log("No expected function $funcname available yet.", '', 2);
+      $this->log("No expected function $funcname available yet. Not running it on " . $module->name, 'TODO', 2);
       $module->addStatus("$scan:unavailable");
     }
     $this->entityManager->persist($module);
     $this->entityManager->flush();
+    return $this;
   }
 
   /**

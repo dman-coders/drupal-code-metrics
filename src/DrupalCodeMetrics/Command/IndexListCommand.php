@@ -11,12 +11,12 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- *
+ * Scan folders for projects and enumerate the 'Module' projects found.
  */
 class IndexListCommand extends Command {
 
   /**
-   *
+   * @inheritdoc
    */
   protected function configure() {
 
@@ -49,7 +49,7 @@ class IndexListCommand extends Command {
   }
 
   /**
-   *
+   * @inheritdoc
    */
   protected function execute(InputInterface $input, OutputInterface $output) {
 

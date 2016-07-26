@@ -50,6 +50,7 @@ class SniffReport {
       return;
     }
     if (!is_array($analysis)) {
+      print(substr(print_r($analysis, 1), 0, 1000));
       throw new \Exception('Invalid Analysis supplied to ' . __FUNCTION__ . '(). Expected an array.', E_NOTICE);
     }
     foreach ($analysis as $key => $val) {
@@ -59,10 +60,13 @@ class SniffReport {
 
   /**
    * Runs PHP sniff analysis.
+   *
+   * @return []string
+   * Textual summary of the analysis.
    */
   function getSniffAnalysis(Module $module, $extensions) {
 
-    print_r(get_defined_vars());
+    #print_r(get_defined_vars());
     $verbosity = 1;
     // Run php analyser directly as PHP.
     $phpcs = new \PHP_CodeSniffer($verbosity);
@@ -77,12 +81,20 @@ class SniffReport {
     // Normally we just name the standard,
     // but passing the full path to it also works.
     $values = array(
-      'standard' => 'vendor/drupal/coder/coder_sniffer/Drupal',
+      #'standard' => 'vendor/drupal/coder/coder_sniffer/Drupal',
+      'standard' => 'Drupal',
       'sniffs' => array(),
     );
-    $phpcs->initStandard($values['standard'], $values['sniffs']);
+    try {
+      $phpcs->initStandard($values['standard'], $values['sniffs']);
+    }
+    catch (Exception $e) {
+        $message = "Could not initialize coding standard " . $values['standard'] . " " . $e->getMessage();
+        error_log($message);
+        return array($message);
+      }
 
-    $analysis = NULL;
+    $analysis = array();
     try {
       // PHPCS handles recursion on its own.
       // $analysis = $phpcs->processFiles($module->getLocation());
@@ -92,7 +104,9 @@ class SniffReport {
       // processFiles is too abstract, it doesn't return the individual results.
       // Do the iteration ourselves.
       foreach ($tree as $filepath) {
-        $analysis = $phpcs->processFile($filepath);
+        /** @var PHP_CodeSniffer_File $analysed */
+        $analysed = $phpcs->processFile($filepath);
+        $analysis[$filepath] = $analysed;
       }
     }
     catch (Exception $e) {
@@ -109,7 +123,7 @@ class SniffReport {
     $reportFile = 'report.out';
     $result = $phpcs->reporting->printReport($report, $showSources, $cliValues, $reportFile);
 
-    print_r($result);
+    #print_r($result);
     return $analysis;
   }
 

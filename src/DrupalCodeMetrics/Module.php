@@ -95,7 +95,8 @@ class Module {
   protected $modified;
 
   /**
-   *
+   * @param bool $flush
+   * @return int|string
    */
   public function getFilecount($flush = FALSE) {
     if (isset($this->filecount) && !$flush) {
@@ -107,7 +108,8 @@ class Module {
   }
 
   /**
-   *
+   * @param $extensions
+   * @return int
    */
   public function getCodeFilecount($extensions) {
     $codefiles = $this->getCodeFiles($extensions);
@@ -171,7 +173,19 @@ class Module {
       }
     }
     return $files;
+  }
 
+
+  /**
+   * @param null $location
+   * @return bool
+   */
+  public function exists($location = NULL) {
+    if (!$location) {
+      $location = $this->location;
+    }
+    $di = new \DirectoryIterator($location);
+    return $di->isReadable();
   }
 
   /**
@@ -181,6 +195,9 @@ class Module {
    * Internally they get serialized into a string for searching.
    *
    * @param $status
+   *
+   * @return Module
+   *   $this
    */
   public function addStatus($status) {
     $statuslist = $this->getStatuslist();
@@ -191,7 +208,10 @@ class Module {
   }
 
   /**
+   * @param $status
    *
+   * @return Module
+   *   $this
    */
   public function removeStatus($status) {
     $statuslist = $this->getStatuslist();
@@ -205,6 +225,8 @@ class Module {
    * See if our status includes a stat for the named scan.
    *
    * @param $scan
+   *
+   * @return string $status
    */
   public function checkStatus($scan) {
     $statuslist = $this->getStatuslist();
@@ -248,7 +270,7 @@ class Module {
     $flatlist = array();
     foreach ($statuslist as $process => $stats) {
       foreach ($stats as $stat => $flag) {
-        if ($flag) {
+        if ($flag && $process && $stat) {
           $key = "${process}:${stat}";
           $flatlist[] = $key;
         }
@@ -257,6 +279,11 @@ class Module {
     $this->status = implode(',', $flatlist);
     $this->modified = TRUE;
     return $statuslist;
+  }
+
+  public function setLocation($location) {
+    // Ensure the path we remember is always absolute.
+    $this->location = realpath($location);
   }
 
 }

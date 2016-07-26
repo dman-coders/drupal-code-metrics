@@ -11,12 +11,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
 
 /**
- *
+ * Scan the completion status of known projects, and run their queued tasks.
  */
 class IndexScanCommand extends Command {
 
   /**
-   *
+   * @inheritdoc
    */
   protected function configure() {
 
@@ -44,7 +44,7 @@ class IndexScanCommand extends Command {
   }
 
   /**
-   *
+   * @inheritdoc
    */
   protected function execute(InputInterface $input, OutputInterface $output) {
 
