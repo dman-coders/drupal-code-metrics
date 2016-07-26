@@ -1,0 +1,36 @@
+# What these files do.
+
+In order of importance.
+
+bin/dcm : Executable binary. Start here.
+  This uses the autoloader to init bootstrap.php
+  and then run DrupalCodeMetrics\Application
+
+../bootstrap.php : Prepares the database storage
+  using Doctrine and the ORM annotations found in the files inside the src directory.
+  This gives us our data serializer.
+
+DrupalCodeMetrics\Application Defines the Symfony Console\Application component.
+  This does the What Am I, Who Am I, then inludes the individual commands in
+  the Command library.
+
+DrupalCodeMetrics\Command\ Individual commands that get run inside the console.
+
+## Libraries
+
+Index.php Data class (ORM) for our list of known modules.
+  Includes CRUD, and the scanning, recursion, and task queuing.
+  Supports to the "index:*" commands.
+
+Module.php Data class (ORM) describing a code module (project).
+  Stuff from the info file, version numbers etc.
+  Also the results of the code analysis, notes on analysis freshness and status.
+
+LOCReport.php Data storage class for storing report summary.
+SniffReport.php Data storage class for storing report summary.
+
+## Helper Libraries
+
+AutoGetSetTrait.php CRUD helper.
+LoggableTrait.php Debug helper.
+drupal.inc Application stub functions.

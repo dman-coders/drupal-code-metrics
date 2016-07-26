@@ -494,7 +494,7 @@ class Index {
     }
     else {
       $report = new SniffReport();
-      $this->log("Creating new Shiff report for $identifier");
+      $this->log("Creating new Sniff report for $identifier");
     }
 
 
